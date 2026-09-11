@@ -13,7 +13,7 @@ function generarSeedPorTimestamp() {
 }
 
 let currentSeed = generarSeedPorTimestamp();
-//let currentSeed = Date.now(); // Cambia esto por un string alfanumérico hasheado para retos diarios
+
 function mulberry32(a) {
     return function() {
       var t = a += 0x6D2B79F5;
@@ -33,11 +33,10 @@ const THEMES = {
 let currentTheme = THEMES.crab;
 
 // --- SISTEMA DE PESOS (dificultad heurística) ---
-// Usado por el motor de deducción para puntuar cuánto "cuesta" cada paso lógico.
 const WEIGHTS = {
-    DIRECT: 1,       // Nivel Básico: exclusión evidente / única celda disponible
-    CONFINEMENT: 3,  // Nivel Medio: bioma monopoliza una fila o columna
-    PROJECTION: 10   // Nivel Avanzado: look-ahead / contradicción
+    DIRECT: 1,
+    CONFINEMENT: 3,
+    PROJECTION: 10
 };
 
 let timerInterval;
@@ -46,18 +45,11 @@ let secondsElapsed = 0;
 let SIZE = 4;
 let lives = 3;
 
-// Estrellas v1:
-// 3 estrellas = terminar con 3 vidas
-// 2 estrellas = terminar con 2 vidas
-// 1 estrella  = terminar con 1 vida
 function calculateStarsFromLives() {
     return Math.max(1, Math.min(3, lives));
 }
 
 // --- NIVEL CURADO / PROGRESIÓN ---
-// El tablero ya no se elige al azar. level-manager.js determina el nivel,
-// progresion.json determina {tamano, indice}, y el diccionario curado aporta
-// la seed reproducible del puzzle.
 let currentLevelInfo = null;
 let currentDictionaryEntry = null;
 let levelLoadToken = 0;
@@ -69,33 +61,37 @@ let markersPlaced = 0;
 let regionGrid = [];
 let solution = [];
 let stateGrid = [];
-
 let currentHintCells = [];
 let isDrawingCrosses = false;
 
-// Estado unificado para mouse, touch y stylus.
+// Estado unificado para interacciones
 let pressTimer = null;
 let activePointerId = null;
 let pressStartCell = null;
-let sweepMode = null; // 'PAINT' | 'ERASE'
+let sweepMode = null;
 let pointerStartX = 0;
 let pointerStartY = 0;
 let pointerMoved = false;
 let pointerDownAt = 0;
 
-// Mantener presionado activa el modo descarte/arrastre.
+let lastTapTime = 0;
+let lastTapCell = null;
+let doubleTapHandled = false;
+
 const LONG_PRESS_MS = 260;
-const RESULT_DIALOG_ARM_MS = 320;
+const RESULT_DIALOG_ARM_MS = 500; // Blindaje incrementado contra ghost-clicks
 const TAP_MOVE_TOLERANCE = 10;
 
 const boardEl = (typeof document !== 'undefined') ? document.getElementById('board') : null;
 
 if (boardEl) {
-    // Evita que el navegador interprete el arrastre del tablero como scroll/zoom
     boardEl.style.touchAction = 'none';
-
-    // Bloqueamos el menú contextual solo dentro del tablero
     boardEl.addEventListener('contextmenu', e => e.preventDefault());
+    
+    // Asesino de clics sintéticos
+    boardEl.addEventListener('touchend', (e) => {
+        if (e.cancelable) e.preventDefault();
+    }, { passive: false });
 }
 
 function formatTime(totalSeconds) {
@@ -136,33 +132,25 @@ async function loadCuratedDictionary(size) {
     if (dictionaryCache.has(size)) {
         return dictionaryCache.get(size);
     }
-
     const url = `${DICTIONARY_BASE_URL}/diccionario_${size}x${size}_N.json`;
     const response = await fetch(url, { cache: 'no-store' });
-
     if (!response.ok) {
         throw new Error(`No se pudo cargar ${url} (${response.status})`);
     }
-
     const dictionary = await response.json();
-
     if (!Array.isArray(dictionary)) {
         throw new Error(`${url} no contiene un arreglo JSON válido.`);
     }
-
     dictionaryCache.set(size, dictionary);
     return dictionary;
 }
 
 async function initBoard() {
     const info = window.TampiDokuLevel?.currentEntry;
-
     if (!info) {
         throw new Error('No hay un nivel activo en TampiDokuLevel.');
     }
-
     const loadToken = ++levelLoadToken;
-
     currentLevelInfo = info;
     SIZE = Number(info.tamano);
 
@@ -171,40 +159,21 @@ async function initBoard() {
     }
 
     const dictionary = await loadCuratedDictionary(SIZE);
-
-    // Si el jugador cambió de nivel mientras terminaba el fetch, descartamos
-    // esta carga para evitar pintar un tablero viejo sobre el nuevo.
     if (loadToken !== levelLoadToken) return false;
 
     const dictionaryIndex = Number(info.indice);
     const entry = dictionary[dictionaryIndex];
 
-    if (!entry) {
-        throw new Error(
-            `Nivel ${info.nivel}: no existe el índice ${dictionaryIndex} ` +
-            `en diccionario_${SIZE}x${SIZE}_N.json.`
-        );
-    }
-
-    if (entry.seed === undefined || entry.seed === null) {
-        throw new Error(
-            `Nivel ${info.nivel}: la entrada ${dictionaryIndex} del diccionario ` +
-            `no contiene "seed".`
-        );
+    if (!entry || entry.seed === undefined || entry.seed === null) {
+        throw new Error(`Nivel ${info.nivel}: error al leer seed en diccionario.`);
     }
 
     currentDictionaryEntry = entry;
-
-    // generateRandomLevel(size, seed) usa un PRNG aislado, por lo que esta seed
-    // siempre reconstruye exactamente el mismo tablero.
     const newLevel = generateRandomLevel(SIZE, entry.seed);
 
     if (!newLevel) {
-        throw new Error(
-            `Nivel ${info.nivel}: la seed ${entry.seed} no pudo reconstruirse.`
-        );
+        throw new Error(`Nivel ${info.nivel}: la seed ${entry.seed} no pudo reconstruirse.`);
     }
-
     if (loadToken !== levelLoadToken) return false;
 
     solution = newLevel.generatedSolution;
@@ -223,35 +192,6 @@ async function initBoard() {
             boardEl.appendChild(cell);
         }
     }
-
-    console.info(
-        `[TampiDoku] Nivel ${info.nivel}: ${SIZE}x${SIZE}, ` +
-        `indice=${dictionaryIndex}, seed=${entry.seed}, score=${info.score}`
-    );
-
-    console.table(regionGrid);
-
-    console.log(
-        '[TampiDoku] Firma visual:',
-        normalizeRegionsForDebug(regionGrid)
-            .map(row => row.join(','))
-            .join('|')
-    );
-
-    function normalizeRegionsForDebug(grid) {
-        const map = new Map();
-        let next = 0;
-
-        return grid.map(row =>
-            row.map(id => {
-                if (!map.has(id)) {
-                    map.set(id, next++);
-                }
-
-                return map.get(id);
-            })
-        );
-    }
     return true;
 }
 
@@ -260,10 +200,7 @@ async function initBoard() {
 function tryPlaceMarker(r, c, cell) {
     const currentState = stateGrid[r][c];
     if (gameOver) return;
-
-    if (currentState === 'LOCKED' || currentState === 'MARKER') {
-        return;
-    }
+    if (currentState === 'LOCKED' || currentState === 'MARKER') return;
 
     if (currentState === 'CROSS') {
         cell.classList.remove('cross');
@@ -272,7 +209,7 @@ function tryPlaceMarker(r, c, cell) {
     if (solution.some(pos => pos.r === r && pos.c === c)) {
         stateGrid[r][c] = 'MARKER';
         cell.classList.add('marker');
-        cell.innerText = currentTheme.icon; // Inyección dinámica
+        cell.innerText = currentTheme.icon;
         
         markersPlaced++;
         checkWin();
@@ -306,17 +243,13 @@ function getCellFromPoint(clientX, clientY) {
 }
 
 function getCellCoordinates(cell) {
-    return {
-        r: Number(cell.dataset.r),
-        c: Number(cell.dataset.c)
-    };
+    return { r: Number(cell.dataset.r), c: Number(cell.dataset.c) };
 }
 
 function beginSweep(startCell) {
     if (!startCell) return;
     const { r, c } = getCellCoordinates(startCell);
     const currentState = stateGrid[r][c];
-
     sweepMode = currentState === 'CROSS' ? 'ERASE' : 'PAINT';
     isDrawingCrosses = true;
     applySweepToCell(r, c, startCell);
@@ -335,8 +268,7 @@ function endPointerInteraction() {
 
 if (boardEl) {
     boardEl.addEventListener('pointerdown', (e) => {
-        if (gameOver) return;
-        if (isAnimatingComodin) return;
+        if (gameOver || isAnimatingComodin) return;
         if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
         if (activePointerId !== null) return;
 
@@ -351,8 +283,22 @@ if (boardEl) {
         e.preventDefault();
         cell.releasePointerCapture(e.pointerId);
 
+        const now = performance.now();
+        
+        // Detección de doble toque (< 300ms en la misma celda)
+        if (now - lastTapTime < 300 && cell === lastTapCell) {
+            doubleTapHandled = true;
+            lastTapTime = 0;
+            lastTapCell = null;
+            tryPlaceMarker(r, c, cell);
+            return; 
+        }
+
+        doubleTapHandled = false;
+        lastTapTime = now;
+        lastTapCell = cell;
         activePointerId = e.pointerId;
-        pointerDownAt = performance.now();
+        pointerDownAt = now;
         pressStartCell = cell;
         pointerStartX = e.clientX;
         pointerStartY = e.clientY;
@@ -383,38 +329,36 @@ if (typeof window !== 'undefined') {
         const dx = e.clientX - pointerStartX;
         const dy = e.clientY - pointerStartY;
 
-        if (Math.hypot(dx, dy) > TAP_MOVE_TOLERANCE) {
+        if (!pointerMoved && Math.hypot(dx, dy) > TAP_MOVE_TOLERANCE) {
             pointerMoved = true;
+            clearTimeout(pressTimer);
+            beginSweep(pressStartCell);
         }
 
         if (!isDrawingCrosses) return;
-
         const cell = getCellFromPoint(e.clientX, e.clientY);
         if (!cell) return;
 
         const { r, c } = getCellCoordinates(cell);
         applySweepToCell(r, c, cell);
-    });
+    }, { passive: false });
 
     window.addEventListener('pointerup', (e) => {
         if (activePointerId !== e.pointerId) return;
-
         e.preventDefault();
         clearTimeout(pressTimer);
 
-        // Copiamos el estado antes de limpiarlo. Así una misma interacción física
-        // solo puede producir una acción del tablero.
+        if (doubleTapHandled) {
+            endPointerInteraction();
+            return;
+        }
+
         const startCell = pressStartCell;
         const wasDrawingCrosses = isDrawingCrosses;
         const didMove = pointerMoved;
-        const pressDuration = pointerDownAt
-            ? performance.now() - pointerDownAt
-            : 0;
+        const pressDuration = pointerDownAt ? performance.now() - pointerDownAt : 0;
+        const isRightMouseButton = e.pointerType === 'mouse' && e.button === 2;
 
-        const isRightMouseButton =
-            e.pointerType === 'mouse' && e.button === 2;
-
-        // Limpiamos ANTES de ejecutar la acción. Esto evita reentradas accidentales.
         endPointerInteraction();
 
         if (!wasDrawingCrosses && !isRightMouseButton && !didMove) {
@@ -422,11 +366,16 @@ if (typeof window !== 'undefined') {
 
             if (releaseCell === startCell && startCell) {
                 const { r, c } = getCellCoordinates(startCell);
+                const currentState = stateGrid[r][c];
 
-                // Un toque corto es siempre intento de marcador.
-                // El descarte comienza únicamente al mantener LONG_PRESS_MS.
-                if (pressDuration < LONG_PRESS_MS + 80) {
-                    tryPlaceMarker(r, c, startCell);
+                if (pressDuration < LONG_PRESS_MS && currentState !== 'LOCKED' && currentState !== 'MARKER') {
+                    if (currentState === 'EMPTY') {
+                        stateGrid[r][c] = 'CROSS';
+                        startCell.classList.add('cross');
+                    } else if (currentState === 'CROSS') {
+                        stateGrid[r][c] = 'EMPTY';
+                        startCell.classList.remove('cross');
+                    }
                 }
             }
         }
@@ -438,21 +387,15 @@ if (typeof window !== 'undefined') {
     });
 }
 
-
-
 function showLoseDialog() {
     const dialog = document.getElementById('lose-dialog');
     if (!dialog) return;
-
     dialog.classList.remove('ready');
     dialog.classList.add('open');
     dialog.setAttribute('aria-hidden', 'false');
 
-    // Evita que el pointerup/click que causó la tercera vida perdida
-    // atraviese hacia el botón Reintentar recién aparecido.
     setTimeout(() => {
         if (!dialog.classList.contains('open')) return;
-
         dialog.classList.add('ready');
         document.getElementById('btn-retry-level')?.focus();
     }, RESULT_DIALOG_ARM_MS);
@@ -461,7 +404,6 @@ function showLoseDialog() {
 function hideLoseDialog() {
     const dialog = document.getElementById('lose-dialog');
     if (!dialog) return;
-
     dialog.classList.remove('open', 'ready');
     dialog.setAttribute('aria-hidden', 'true');
 }
@@ -469,7 +411,6 @@ function hideLoseDialog() {
 function playWinConfetti() {
     const confetti = document.getElementById('win-confetti');
     if (!confetti) return;
-
     confetti.classList.remove('active');
     void confetti.offsetWidth;
     confetti.classList.add('active');
@@ -480,8 +421,6 @@ function playWinConfetti() {
 }
 
 function setupResultUi() {
-    // Los botones de resultado usan onclick directo en index_niveles.html.
-    // Aquí solo manejamos Escape para no registrar acciones duplicadas.
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') {
             const dialog = document.getElementById('lose-dialog');
@@ -492,12 +431,10 @@ function setupResultUi() {
     });
 }
 
-
 // --- FLUJO DE PARTIDA ---
 
 async function resetGame() {
     hideLoseDialog();
-
     const info = window.TampiDokuLevel?.currentEntry;
 
     if (!info) {
@@ -515,29 +452,26 @@ async function resetGame() {
     if (btnReveal) btnReveal.innerText = `🛸 Revelar ${currentTheme.name}`;
 
     lives = 3;
-    gameOver = true; // bloquea interacción mientras carga el puzzle
+    gameOver = true; 
     markersPlaced = 0;
     endPointerInteraction();
 
     document.getElementById('lives').innerText = lives;
     document.getElementById('game-message').innerText = "";
-
     clearInterval(timerInterval);
     document.getElementById('timer').innerText = "00:00";
-
+    
     updateRecordDisplay();
     clearHints();
 
     try {
         const loaded = await initBoard();
         if (!loaded) return;
-
         gameOver = false;
         startTimer();
     } catch (error) {
         gameOver = true;
         console.error('[TampiDoku]', error);
-
         const msg = document.getElementById('game-message');
         msg.innerText = `Error al cargar el nivel ${getCurrentLevelNumber()}.`;
         msg.style.color = "red";
@@ -547,7 +481,6 @@ async function resetGame() {
 function triggerError(cell, r, c) {
     lives--;
     document.getElementById('lives').innerText = lives;
-    
     cell.classList.add('error-shake');
     setTimeout(() => cell.classList.remove('error-shake'), 400);
 
@@ -558,11 +491,9 @@ function triggerError(cell, r, c) {
     if(lives <= 0) {
         gameOver = true;
         clearInterval(timerInterval);
-
         const msg = document.getElementById('game-message');
         msg.innerText = "Te quedaste sin vidas.";
         msg.style.color = "#c05621";
-
         showLoseDialog();
     }
 }
@@ -581,7 +512,6 @@ function checkWin() {
         }
 
         updateRecordDisplay();
-
         const completedLevel = getCurrentLevelNumber();
         const msg = document.getElementById('game-message');
 
@@ -594,8 +524,6 @@ function checkWin() {
         }
         msg.style.color = "green";
 
-        // Guardamos el resultado real antes de avanzar.
-        // player-progress.js conserva la mejor cantidad de estrellas y el mejor tiempo.
         const starsEarned = calculateStarsFromLives();
         window.TampiDokuProgress?.completeLevel(completedLevel, {
             stars: starsEarned,
@@ -605,8 +533,6 @@ function checkWin() {
         const starsText = '⭐'.repeat(starsEarned);
         msg.innerText += ` ${starsText}`;
 
-        // El avance ya no depende de SIZE. Desbloqueamos el siguiente nivel
-        // y pedimos al level-manager que lo cargue según progresion.json.
         window.TampiDokuLevel?.markCompleted(completedLevel);
 
         setTimeout(() => {
@@ -625,7 +551,7 @@ function checkWin() {
 // --- SISTEMA DE PISTAS Y COMODÍN ---
 
 function requestHint() {
-	if (isAnimatingComodin) return;
+    if (isAnimatingComodin) return;
     if (gameOver) return;
     clearHints(); 
 
@@ -699,17 +625,7 @@ if (boardEl) {
     boardEl.addEventListener('click', clearHints);
 }
 
-// ============================================================
-// MOTOR PURO DE DEDUCCIÓN
-// Todas las funciones de este bloque reciben (stateGrid, regionGrid, size)
-// como parámetros explícitos y NUNCA leen variables globales ni tocan el
-// DOM. Esto permite que el mismo motor sirva tanto para las pistas en vivo
-// (findLogicalHint más abajo) como para un futuro Web Worker / script
-// curador offline, que no tiene acceso a `document`.
-// ============================================================
-
 function getGroupCells(regionGrid, size, type, index) {
-    // type: 'row' | 'col' | 'biome'
     let cells = [];
     for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
@@ -739,8 +655,6 @@ function findMarkerExclusions(stateGrid, regionGrid, size, markerR, markerC) {
     return cells;
 }
 
-// Nivel Básico: exclusión evidente tras un marcador + aprobación de marcador
-// cuando a una fila, columna o zona solo le queda una celda disponible.
 function findDirectDeductions(stateGrid, regionGrid, size) {
     for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
@@ -778,12 +692,9 @@ function findDirectDeductions(stateGrid, regionGrid, size) {
             }
         }
     }
-
     return null;
 }
 
-// Nivel Medio: las celdas libres de un bioma quedan alineadas en una misma
-// fila o columna, así que el bioma "monopoliza" esa línea.
 function findConfinementDeductions(stateGrid, regionGrid, size) {
     let emptyCellsPerBiome = {};
     for (let i = 0; i < size; i++) emptyCellsPerBiome[i] = [];
@@ -802,7 +713,6 @@ function findConfinementDeductions(stateGrid, regionGrid, size) {
 
     for (let biomeId in emptyCellsPerBiome) {
         if (biomesWithMarkers.has(Number(biomeId))) continue;
-
         let cells = emptyCellsPerBiome[biomeId];
         if (cells.length === 0) continue;
 
@@ -853,8 +763,6 @@ function cloneStateGrid(stateGrid) {
     return stateGrid.map(row => row.slice());
 }
 
-// Aplica un paso lógico (AUTO_CROSS o PLACE_MARKER) directamente sobre una
-// matriz en memoria. No toca el DOM ni el stateGrid real del juego.
 function applyStepToGrid(gridToMutate, step) {
     if (step.action === 'PLACE_MARKER') {
         let { r, c } = step.cells[0];
@@ -866,8 +774,6 @@ function applyStepToGrid(gridToMutate, step) {
     }
 }
 
-// Una fila, columna o bioma sin marcador y sin celdas EMPTY restantes es
-// una contradicción: ya no hay dónde colocar el marcador que le corresponde.
 function hasContradiction(stateGrid, regionGrid, size) {
     for (let type of ['row', 'col', 'biome']) {
         for (let index = 0; index < size; index++) {
@@ -881,8 +787,6 @@ function hasContradiction(stateGrid, regionGrid, size) {
     return false;
 }
 
-// Corre Directo + Confinamiento repetidamente hasta que no haya más
-// movimiento. Uso interno de la capa de Proyección para simular "qué pasaría si".
 function runDirectAndConfinementToFixpoint(stateGrid, regionGrid, size) {
     while (true) {
         let step = findDirectDeductions(stateGrid, regionGrid, size)
@@ -892,10 +796,6 @@ function runDirectAndConfinementToFixpoint(stateGrid, regionGrid, size) {
     }
 }
 
-// Nivel Avanzado: asume temporalmente un marcador en una celda vacía; si esa
-// suposición fuerza una contradicción tras aplicar deducciones básicas, la
-// celda original debe ir tachada. Un solo nivel de profundidad (sin anidar
-// suposiciones dentro de suposiciones), tal como pide el spec.
 function findProjectionDeduction(stateGrid, regionGrid, size) {
     for (let r = 0; r < size; r++) {
         for (let c = 0; c < size; c++) {
@@ -919,18 +819,12 @@ function findProjectionDeduction(stateGrid, regionGrid, size) {
     return null;
 }
 
-// Punto de entrada único del motor: intenta la capa más barata primero.
 function findNextLogicalStep(stateGrid, regionGrid, size) {
     return findDirectDeductions(stateGrid, regionGrid, size)
         || findConfinementDeductions(stateGrid, regionGrid, size)
         || findProjectionDeduction(stateGrid, regionGrid, size);
 }
 
-// Orquestador: resuelve un tablero completo aplicando las 3 capas en bucle
-// sobre una COPIA del stateGrid (nunca muta el real), acumulando el puntaje
-// de dificultad. Es la pieza que reutilizará el curador offline para
-// clasificar tableros, y también sirve para saber si un tablero es
-// resoluble por lógica pura (sin adivinar).
 function resolverCompleto(stateGrid, regionGrid, size) {
     let working = cloneStateGrid(stateGrid);
     let pasos = [];
@@ -958,15 +852,10 @@ function resolverCompleto(stateGrid, regionGrid, size) {
     }
 }
 
-// --- ADAPTADOR PARA LA UI EN VIVO ---
-// findLogicalHint() es la única función de esta sección que sí conoce las
-// variables globales del juego (stateGrid, regionGrid, SIZE): traduce el
-// resultado del motor puro al formato que ya consume requestHint().
 function findLogicalHint() {
     return findNextLogicalStep(stateGrid, regionGrid, SIZE);
 }
 
-// Variable bandera para evitar clics mientras se anima el OVNI
 let isAnimatingComodin = false; 
 
 function revealRandomMarker() {
@@ -981,41 +870,30 @@ function revealRandomMarker() {
     }
 
     if (missingMarkers.length === 0) return; 
-    
-    // Bloqueamos interacciones
     isAnimatingComodin = true;
 
-    // Elegir celda
     let randomIdx = Math.floor(seededRandom() * missingMarkers.length);
     let pos = missingMarkers[randomIdx];
     let r = pos.r;
     let c = pos.c;
 
     let domCell = document.querySelector(`.cell[data-r='${r}'][data-c='${c}']`);
-    
-    // Calcular coordenadas exactas relativas a la pantalla
     let cellRect = domCell.getBoundingClientRect();
     
     let targetX = cellRect.left + (cellRect.width / 2);
     let targetY = cellRect.top + (cellRect.height / 2);
 
-    // Preparar OVNI
     const overlay = document.getElementById('ufo-overlay');
     const ufoWrap = document.getElementById('ufo-wrap');
     
-    // Ajustar posición: restamos 70px (mitad del ancho) y 100px de altura para dar espacio al rayo
     ufoWrap.style.left = `${targetX - 70}px`; 
     ufoWrap.style.top = `${targetY - 100}px`;
-
-    // 1. Aparece el OVNI
     overlay.classList.add('active');
 
-    // 2. Enciende el Rayo Tractor
     setTimeout(() => {
         overlay.classList.add('abducting');
     }, 600);
 
-    // 3. Suelta el Personaje
     setTimeout(() => {
         stateGrid[r][c] = 'MARKER';
         domCell.classList.remove('cross');
@@ -1023,26 +901,23 @@ function revealRandomMarker() {
         domCell.style.cursor = 'pointer'; 
         
         domCell.classList.add('marker');
-        domCell.innerText = currentTheme.icon; // El tema dinámico brilla aquí
+        domCell.innerText = currentTheme.icon; 
         
         markersPlaced++;
         autoCrossAround(r, c);
-
         document.getElementById('hint-display').innerText = `🛸 ¡Un OVNI dejó caer un(a) ${currentTheme.name} en su lugar!`;
     }, 1200);
 
-    // 4. Apaga el rayo y se retira
     setTimeout(() => {
         overlay.classList.remove('abducting');
-        overlay.classList.add('leaving'); // Gatilla la animación de salida
+        overlay.classList.add('leaving'); 
         
         setTimeout(() => {
             overlay.classList.remove('active');
-            overlay.classList.remove('leaving'); // Limpia para el próximo uso
-        }, 600); // Espera a que termine la transición CSS
+            overlay.classList.remove('leaving'); 
+        }, 600); 
     }, 1800);
 
-    // 5. Desbloquea juego y revisa victoria
     setTimeout(() => {
         isAnimatingComodin = false;
         checkWin();
@@ -1058,15 +933,6 @@ function autoCrossAround(markerR, markerC) {
     });
 }
 
-// --- GENERADOR PROCEDURAL DE NIVELES ---
-
-// Si se pasa `seed`, la generación usa una instancia de Mulberry32 propia y
-// aislada del PRNG continuo del módulo: la misma semilla siempre produce
-// exactamente el mismo tablero, sin importar qué más haya consumido
-// `seededRandom` antes (tema elegido, comodín usado, etc.). Necesario para
-// que el futuro curador offline pueda mapear "seed N -> tablero N" de forma
-// reproducible. Si no se pasa seed, el comportamiento interactivo actual
-// (usar el generador continuo de sesión) se mantiene sin cambios.
 function generateRandomLevel(size, seed = null) {
     const rng = (seed !== null) ? mulberry32(seed) : seededRandom;
     let maxAttempts = 1500;
@@ -1134,9 +1000,6 @@ function generateRandomLevel(size, seed = null) {
     }
 
     if (seed !== null) {
-        // No reintentamos con la misma semilla: produciría idéntica secuencia
-        // de números y fallaría exactamente igual otra vez. El curador debe
-        // descartar este seed y probar con el siguiente.
         console.warn(`Semilla ${seed} no produjo un tablero único tras ${maxAttempts} intentos. Descartada.`);
         return null;
     }
@@ -1189,17 +1052,12 @@ function shuffleArray(array, rng = seededRandom) {
 
 setupResultUi();
 
-// --- INTEGRACIÓN CON level-manager.js ---
-// level-manager.js es quien resuelve URL/localStorage/progresion.json.
-// Cada cambio de nivel dispara un único reinicio con el puzzle curado exacto.
 if (typeof document !== 'undefined') {
     document.addEventListener('tampidoku:levelchange', (event) => {
         currentLevelInfo = event.detail?.entry ?? window.TampiDokuLevel?.currentEntry ?? null;
         resetGame();
     });
 
-    // Caso defensivo: si brain.js se carga después de que level-manager ya
-    // terminó de inicializar, arrancamos directamente.
     if (window.TampiDokuLevel?.ready) {
         currentLevelInfo = window.TampiDokuLevel.currentEntry;
         resetGame();

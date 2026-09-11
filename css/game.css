@@ -1,12 +1,12 @@
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f4f4f9;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 40px;
-    user-select: none; 
+    min-height: 100dvh;
+    margin: 0;
+    padding: max(10px, env(safe-area-inset-top)) 10px calc(96px + env(safe-area-inset-bottom));
+    overflow-x: hidden;
+    /* Corrección BUG-002: Rehabilitar scroll vertical como red de seguridad */
+    overflow-y: auto; 
 }
+
 h1 { margin: 0; color: #333; }
 .instructions { color: #666; margin-bottom: 20px; text-align: center; max-width: 400px; }
 
@@ -21,15 +21,12 @@ h1 { margin: 0; color: #333; }
 }
 
 .board {
-    display: grid;
-    gap: 4px;
-    padding: 7px;
-    background: rgba(255,255,255,.78);
-    border-radius: 22px;
-    box-shadow: 0 12px 30px rgba(53,91,140,.12), inset 0 1px 0 rgba(255,255,255,.9);
-    
-    /* Contenedor adaptativo responsivo */
-    width: min(94vw, 560px); 
+    display: grid !important; 
+    width: 100%;
+    max-width: min(560px, 55vh);
+    margin-inline: auto;
+    padding: clamp(4px, 1.6vw, 7px);
+    gap: clamp(2px, 1vw, 4px);
     box-sizing: border-box;
 }
 
