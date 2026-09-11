@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TampiDoku - Soft UI</title>
+    <link rel="stylesheet" href="css/game.css">
+
+<style>
+    .level-pill {
+        gap: 6px;
+    }
+
+    .level-nav,
+    .level-display-button {
+        border: 0;
+        background: transparent;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+        padding: 2px 6px;
+    }
+
+    .level-nav {
+        font-size: 1.35rem;
+        line-height: 1;
+        font-weight: 700;
+    }
+
+    .level-nav:disabled {
+        opacity: .35;
+        cursor: default;
+    }
+
+    .level-display-button {
+        font-weight: 700;
+        min-width: 82px;
+    }
+
+    .level-selector-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(20, 28, 38, .34);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 16px;
+    }
+
+    .level-selector-backdrop.open {
+        display: flex;
+    }
+
+    .level-selector-dialog {
+        width: min(430px, 94vw);
+        max-height: 78vh;
+        overflow: hidden;
+        border-radius: 20px;
+        background: #f4f7fb;
+        box-shadow: 0 20px 60px rgba(0,0,0,.22);
+        padding: 18px;
+    }
+
+    .level-selector-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+
+    .level-selector-header h2 {
+        margin: 0;
+        font-size: 1.15rem;
+    }
+
+    .level-selector-close {
+        border: 0;
+        background: transparent;
+        font-size: 1.45rem;
+        cursor: pointer;
+    }
+
+    .level-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 8px;
+        overflow-y: auto;
+        max-height: 58vh;
+        padding: 4px;
+    }
+
+    .level-option {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 4px;
+        cursor: pointer;
+        background: #eef2f7;
+        font-weight: 700;
+    }
+
+    .level-option.current {
+        outline: 2px solid currentColor;
+    }
+
+    .level-option.locked {
+        opacity: .38;
+        cursor: not-allowed;
+    }
+
+    .level-selector-status {
+        margin-top: 12px;
+        font-size: .9rem;
+        text-align: center;
+        opacity: .75;
+    }
+</style>
+
+</head>
+<body>
+
+    <h1>TampiDoku</h1>
+    
+    
+<div class="top-hud">
+    <!-- Píldora de Nivel -->
+    <div class="hud-pill level-pill">
+        <span class="hud-icon">▦</span>
+        <button id="btn-prev-level" class="level-nav" type="button" aria-label="Nivel anterior">‹</button>
+        <button id="level-display" class="level-display-button" type="button" aria-label="Abrir mapa de niveles">
+            Nivel 1
+        </button>
+        <button id="btn-next-level" class="level-nav" type="button" aria-label="Nivel siguiente">›</button>
+    </div>
+    
+    <!-- Píldora de Vidas -->
+    <div class="hud-pill">
+        <span class="hud-icon" style="color: #e56b6f;">❤️</span> 
+        <span id="lives-display"><span id="lives">3</span> / 3</span>
+    </div>
+
+    <!-- Píldora de Temporizador -->
+    <div class="hud-pill">
+        <span class="hud-icon" style="color: #4299e1;">⏱️</span> 
+        <span id="timer">00:00</span>
+    </div>
+
+    <!-- Píldora de Récord -->
+    <div class="hud-pill">
+        <span class="hud-icon" style="color: #ffd166;">🏆</span> 
+        <span id="record-display">--:--</span>
+    </div>
+</div>
+
+<div class="rules-bar">
+    <div class="rule-card rule-blue">
+        <div class="diagram-grid">
+            <div></div><div class="dot dot-blue"></div><div></div>
+            <div class="dot dot-blue"></div><div class="dot dot-blue"></div><div class="dot dot-blue"></div>
+            <div></div><div class="dot dot-blue"></div><div></div>
+        </div>
+        <div class="rule-text">
+            <strong>1 por fila</strong>
+            <span>y columna</span>
+        </div>
+    </div>
+
+    <div class="rule-card rule-green">
+        <div class="diagram-blob"></div>
+        <div class="rule-text">
+            <strong>1 por zona</strong>
+            <span>(de color)</span>
+        </div>
+    </div>
+
+    <div class="rule-card rule-purple">
+        <div class="diagram-grid">
+            <div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div>
+            <div class="dot dot-purple-light"></div><div class="dot dot-purple-dark"></div><div class="dot dot-purple-light"></div>
+            <div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div>
+        </div>
+        <div class="rule-text">
+            <strong>Sin vecinos</strong>
+            <span>(incluye diagonales)</span>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Capa superpuesta del comodín -->
+<div id="ufo-overlay">
+    <div class="ufo-wrap" id="ufo-wrap">
+        <svg class="ufo-svg" viewBox="0 0 300 260" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="beamGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#9dffe1" stop-opacity=".7" />
+                    <stop offset="100%" stop-color="#9dffe1" stop-opacity="0" />
+                </linearGradient>
+            </defs>
+            <g class="beam">
+                <path class="beam-shape" d="M112 126 L188 126 L245 245 L55 245 Z" />
+            </g>
+            <g class="ship">
+                <path class="dome" d="M96 78 C105 38 125 24 150 24 C175 24 195 38 204 78 Z" />
+                <ellipse class="body-main" cx="150" cy="94" rx="104" ry="36" />
+                <ellipse class="rim" cx="150" cy="99" rx="117" ry="25" />
+                <path class="body-bottom" d="M68 100 C82 127 108 142 150 142 C192 142 218 127 232 100 C215 111 188 118 150 118 C112 118 85 111 68 100 Z" />
+                <g>
+                    <circle class="light" cx="85" cy="108" r="7" />
+                    <circle class="light" cx="118" cy="118" r="7" />
+                    <circle class="light" cx="150" cy="122" r="7" />
+                    <circle class="light" cx="182" cy="118" r="7" />
+                    <circle class="light" cx="215" cy="108" r="7" />
+                </g>
+            </g>
+        </svg>
+    </div>
+</div>
+<!-- Capa superpuesta del comodín -->
+    
+    <div id="hint-display"></div>
+    <div id="game-message" style="font-weight:bold; min-height: 24px; text-align: center; margin-bottom: 10px;"></div>
+    
+    <div id="board" class="board"></div>
+
+    <nav class="game-actions" aria-label="Acciones del nivel">
+        <button id="btn-hint" class="game-action game-action-hint" type="button" onclick="requestHint()">
+            <span class="game-action-icon">💡</span>
+            <span class="game-action-label">Pista</span>
+        </button>
+
+        <button id="btn-reveal" class="game-action game-action-reveal" type="button" onclick="revealRandomMarker()">
+            <span class="game-action-icon">🛸</span>
+            <span class="game-action-label">Revelar</span>
+        </button>
+
+        <button class="game-action game-action-reset" type="button" onclick="resetGame()">
+            <span class="game-action-icon">↻</span>
+            <span class="game-action-label">Reiniciar</span>
+        </button>
+    </nav>
+
+    <!--
+        level-manager.js debe cargarse antes de game.js.
+        Expone:
+          window.TampiDokuLevel.currentLevel
+          window.TampiDokuLevel.currentEntry
+          window.TampiDokuLevel.goToLevel(n)
+          window.TampiDokuLevel.markCompleted(n)
+
+        También dispara:
+          document event "tampidoku:levelready"
+          document event "tampidoku:levelchange"
+    -->
+    <script src="js/level-manager.js"></script>
+    <script src="js/player-progress.js"></script>
+    <script src="js/brain.js"></script>
+
+<div id="level-selector" class="level-selector-backdrop" aria-hidden="true">
+    <div class="level-selector-dialog" role="dialog" aria-modal="true" aria-labelledby="level-selector-title">
+        <div class="level-selector-header">
+            <h2 id="level-selector-title">Seleccionar nivel</h2>
+            <button id="level-selector-close" class="level-selector-close" type="button" aria-label="Cerrar">×</button>
+        </div>
+        <div id="level-grid" class="level-grid"></div>
+        <div id="level-selector-status" class="level-selector-status"></div>
+    </div>
+</div>
+
+
+<!-- Celebración de victoria: animación CSS -->
+<div id="win-confetti" aria-hidden="true">
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+    <span class="confetti-piece"></span><span class="confetti-piece"></span>
+</div>
+
+<!-- Modal de derrota -->
+<div id="lose-dialog" class="game-result-backdrop" aria-hidden="true">
+    <div class="game-result-card" role="dialog" aria-modal="true" aria-labelledby="lose-title">
+        <div class="result-face">😵</div>
+        <h2 id="lose-title">¡Uy, casi!</h2>
+        <p>Te quedaste sin vidas. Puedes intentarlo otra vez cuando quieras.</p>
+        <div class="result-actions">
+            <button id="btn-retry-level" class="result-retry" type="button" onclick="hideLoseDialog(); resetGame();">↻ Reintentar</button>
+            <button id="btn-result-levels" class="result-levels" type="button" onclick="window.location.href='niveles.html';">▦ Niveles</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

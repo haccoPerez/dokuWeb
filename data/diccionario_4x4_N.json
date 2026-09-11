@@ -1,0 +1,867 @@
+[
+  {
+    "seed": 260910092750,
+    "score": 6,
+    "indice": 0
+  },
+  {
+    "seed": 260910092865,
+    "score": 6,
+    "indice": 1
+  },
+  {
+    "seed": 260910092444,
+    "score": 7,
+    "indice": 2
+  },
+  {
+    "seed": 260910092448,
+    "score": 7,
+    "indice": 3
+  },
+  {
+    "seed": 260910092449,
+    "score": 7,
+    "indice": 4
+  },
+  {
+    "seed": 260910092450,
+    "score": 7,
+    "indice": 5
+  },
+  {
+    "seed": 260910092451,
+    "score": 7,
+    "indice": 6
+  },
+  {
+    "seed": 260910092453,
+    "score": 7,
+    "indice": 7
+  },
+  {
+    "seed": 260910092456,
+    "score": 7,
+    "indice": 8
+  },
+  {
+    "seed": 260910092457,
+    "score": 7,
+    "indice": 9
+  },
+  {
+    "seed": 260910092458,
+    "score": 7,
+    "indice": 10
+  },
+  {
+    "seed": 260910092461,
+    "score": 7,
+    "indice": 11
+  },
+  {
+    "seed": 260910092464,
+    "score": 7,
+    "indice": 12
+  },
+  {
+    "seed": 260910092469,
+    "score": 7,
+    "indice": 13
+  },
+  {
+    "seed": 260910092470,
+    "score": 7,
+    "indice": 14
+  },
+  {
+    "seed": 260910092471,
+    "score": 7,
+    "indice": 15
+  },
+  {
+    "seed": 260910092472,
+    "score": 7,
+    "indice": 16
+  },
+  {
+    "seed": 260910092473,
+    "score": 7,
+    "indice": 17
+  },
+  {
+    "seed": 260910092474,
+    "score": 7,
+    "indice": 18
+  },
+  {
+    "seed": 260910092475,
+    "score": 7,
+    "indice": 19
+  },
+  {
+    "seed": 260910092476,
+    "score": 7,
+    "indice": 20
+  },
+  {
+    "seed": 260910092477,
+    "score": 7,
+    "indice": 21
+  },
+  {
+    "seed": 260910092478,
+    "score": 7,
+    "indice": 22
+  },
+  {
+    "seed": 260910092480,
+    "score": 7,
+    "indice": 23
+  },
+  {
+    "seed": 260910092481,
+    "score": 7,
+    "indice": 24
+  },
+  {
+    "seed": 260910092482,
+    "score": 7,
+    "indice": 25
+  },
+  {
+    "seed": 260910092487,
+    "score": 7,
+    "indice": 26
+  },
+  {
+    "seed": 260910092488,
+    "score": 7,
+    "indice": 27
+  },
+  {
+    "seed": 260910092489,
+    "score": 7,
+    "indice": 28
+  },
+  {
+    "seed": 260910092495,
+    "score": 7,
+    "indice": 29
+  },
+  {
+    "seed": 260910092498,
+    "score": 7,
+    "indice": 30
+  },
+  {
+    "seed": 260910092499,
+    "score": 7,
+    "indice": 31
+  },
+  {
+    "seed": 260910092503,
+    "score": 7,
+    "indice": 32
+  },
+  {
+    "seed": 260910092504,
+    "score": 7,
+    "indice": 33
+  },
+  {
+    "seed": 260910092508,
+    "score": 7,
+    "indice": 34
+  },
+  {
+    "seed": 260910092510,
+    "score": 7,
+    "indice": 35
+  },
+  {
+    "seed": 260910092515,
+    "score": 7,
+    "indice": 36
+  },
+  {
+    "seed": 260910092517,
+    "score": 7,
+    "indice": 37
+  },
+  {
+    "seed": 260910092518,
+    "score": 7,
+    "indice": 38
+  },
+  {
+    "seed": 260910092519,
+    "score": 7,
+    "indice": 39
+  },
+  {
+    "seed": 260910092520,
+    "score": 7,
+    "indice": 40
+  },
+  {
+    "seed": 260910092524,
+    "score": 7,
+    "indice": 41
+  },
+  {
+    "seed": 260910092527,
+    "score": 7,
+    "indice": 42
+  },
+  {
+    "seed": 260910092528,
+    "score": 7,
+    "indice": 43
+  },
+  {
+    "seed": 260910092529,
+    "score": 7,
+    "indice": 44
+  },
+  {
+    "seed": 260910092530,
+    "score": 7,
+    "indice": 45
+  },
+  {
+    "seed": 260910092532,
+    "score": 7,
+    "indice": 46
+  },
+  {
+    "seed": 260910092535,
+    "score": 7,
+    "indice": 47
+  },
+  {
+    "seed": 260910092537,
+    "score": 7,
+    "indice": 48
+  },
+  {
+    "seed": 260910092539,
+    "score": 7,
+    "indice": 49
+  },
+  {
+    "seed": 260910092544,
+    "score": 7,
+    "indice": 50
+  },
+  {
+    "seed": 260910092553,
+    "score": 7,
+    "indice": 51
+  },
+  {
+    "seed": 260910092554,
+    "score": 7,
+    "indice": 52
+  },
+  {
+    "seed": 260910092557,
+    "score": 7,
+    "indice": 53
+  },
+  {
+    "seed": 260910092558,
+    "score": 7,
+    "indice": 54
+  },
+  {
+    "seed": 260910092560,
+    "score": 7,
+    "indice": 55
+  },
+  {
+    "seed": 260910092563,
+    "score": 7,
+    "indice": 56
+  },
+  {
+    "seed": 260910092564,
+    "score": 7,
+    "indice": 57
+  },
+  {
+    "seed": 260910092567,
+    "score": 7,
+    "indice": 58
+  },
+  {
+    "seed": 260910092571,
+    "score": 7,
+    "indice": 59
+  },
+  {
+    "seed": 260910092575,
+    "score": 7,
+    "indice": 60
+  },
+  {
+    "seed": 260910092579,
+    "score": 7,
+    "indice": 61
+  },
+  {
+    "seed": 260910092581,
+    "score": 7,
+    "indice": 62
+  },
+  {
+    "seed": 260910092584,
+    "score": 7,
+    "indice": 63
+  },
+  {
+    "seed": 260910092588,
+    "score": 7,
+    "indice": 64
+  },
+  {
+    "seed": 260910092592,
+    "score": 7,
+    "indice": 65
+  },
+  {
+    "seed": 260910092597,
+    "score": 7,
+    "indice": 66
+  },
+  {
+    "seed": 260910092598,
+    "score": 7,
+    "indice": 67
+  },
+  {
+    "seed": 260910092599,
+    "score": 7,
+    "indice": 68
+  },
+  {
+    "seed": 260910092600,
+    "score": 7,
+    "indice": 69
+  },
+  {
+    "seed": 260910092611,
+    "score": 7,
+    "indice": 70
+  },
+  {
+    "seed": 260910092620,
+    "score": 7,
+    "indice": 71
+  },
+  {
+    "seed": 260910092622,
+    "score": 7,
+    "indice": 72
+  },
+  {
+    "seed": 260910092623,
+    "score": 7,
+    "indice": 73
+  },
+  {
+    "seed": 260910092624,
+    "score": 7,
+    "indice": 74
+  },
+  {
+    "seed": 260910092625,
+    "score": 7,
+    "indice": 75
+  },
+  {
+    "seed": 260910092640,
+    "score": 7,
+    "indice": 76
+  },
+  {
+    "seed": 260910092643,
+    "score": 7,
+    "indice": 77
+  },
+  {
+    "seed": 260910092657,
+    "score": 7,
+    "indice": 78
+  },
+  {
+    "seed": 260910092662,
+    "score": 7,
+    "indice": 79
+  },
+  {
+    "seed": 260910092670,
+    "score": 7,
+    "indice": 80
+  },
+  {
+    "seed": 260910092671,
+    "score": 7,
+    "indice": 81
+  },
+  {
+    "seed": 260910092678,
+    "score": 7,
+    "indice": 82
+  },
+  {
+    "seed": 260910092680,
+    "score": 7,
+    "indice": 83
+  },
+  {
+    "seed": 260910092690,
+    "score": 7,
+    "indice": 84
+  },
+  {
+    "seed": 260910092701,
+    "score": 7,
+    "indice": 85
+  },
+  {
+    "seed": 260910092703,
+    "score": 7,
+    "indice": 86
+  },
+  {
+    "seed": 260910092706,
+    "score": 7,
+    "indice": 87
+  },
+  {
+    "seed": 260910092709,
+    "score": 7,
+    "indice": 88
+  },
+  {
+    "seed": 260910092715,
+    "score": 7,
+    "indice": 89
+  },
+  {
+    "seed": 260910092723,
+    "score": 7,
+    "indice": 90
+  },
+  {
+    "seed": 260910092726,
+    "score": 7,
+    "indice": 91
+  },
+  {
+    "seed": 260910092735,
+    "score": 7,
+    "indice": 92
+  },
+  {
+    "seed": 260910092737,
+    "score": 7,
+    "indice": 93
+  },
+  {
+    "seed": 260910092738,
+    "score": 7,
+    "indice": 94
+  },
+  {
+    "seed": 260910092762,
+    "score": 7,
+    "indice": 95
+  },
+  {
+    "seed": 260910092771,
+    "score": 7,
+    "indice": 96
+  },
+  {
+    "seed": 260910092773,
+    "score": 7,
+    "indice": 97
+  },
+  {
+    "seed": 260910092786,
+    "score": 7,
+    "indice": 98
+  },
+  {
+    "seed": 260910092789,
+    "score": 7,
+    "indice": 99
+  },
+  {
+    "seed": 260910092796,
+    "score": 7,
+    "indice": 100
+  },
+  {
+    "seed": 260910092797,
+    "score": 7,
+    "indice": 101
+  },
+  {
+    "seed": 260910092798,
+    "score": 7,
+    "indice": 102
+  },
+  {
+    "seed": 260910092811,
+    "score": 7,
+    "indice": 103
+  },
+  {
+    "seed": 260910092837,
+    "score": 7,
+    "indice": 104
+  },
+  {
+    "seed": 260910092838,
+    "score": 7,
+    "indice": 105
+  },
+  {
+    "seed": 260910092840,
+    "score": 7,
+    "indice": 106
+  },
+  {
+    "seed": 260910092860,
+    "score": 7,
+    "indice": 107
+  },
+  {
+    "seed": 260910092862,
+    "score": 7,
+    "indice": 108
+  },
+  {
+    "seed": 260910092868,
+    "score": 7,
+    "indice": 109
+  },
+  {
+    "seed": 260910092878,
+    "score": 7,
+    "indice": 110
+  },
+  {
+    "seed": 260910092888,
+    "score": 7,
+    "indice": 111
+  },
+  {
+    "seed": 260910092891,
+    "score": 7,
+    "indice": 112
+  },
+  {
+    "seed": 260910092896,
+    "score": 7,
+    "indice": 113
+  },
+  {
+    "seed": 260910092901,
+    "score": 7,
+    "indice": 114
+  },
+  {
+    "seed": 260910092910,
+    "score": 7,
+    "indice": 115
+  },
+  {
+    "seed": 260910092914,
+    "score": 7,
+    "indice": 116
+  },
+  {
+    "seed": 260910092462,
+    "score": 9,
+    "indice": 117
+  },
+  {
+    "seed": 260910092663,
+    "score": 9,
+    "indice": 118
+  },
+  {
+    "seed": 260910092729,
+    "score": 9,
+    "indice": 119
+  },
+  {
+    "seed": 260910092454,
+    "score": 10,
+    "indice": 120
+  },
+  {
+    "seed": 260910092455,
+    "score": 10,
+    "indice": 121
+  },
+  {
+    "seed": 260910092565,
+    "score": 10,
+    "indice": 122
+  },
+  {
+    "seed": 260910092586,
+    "score": 10,
+    "indice": 123
+  },
+  {
+    "seed": 260910092591,
+    "score": 10,
+    "indice": 124
+  },
+  {
+    "seed": 260910092632,
+    "score": 10,
+    "indice": 125
+  },
+  {
+    "seed": 260910092647,
+    "score": 10,
+    "indice": 126
+  },
+  {
+    "seed": 260910092649,
+    "score": 10,
+    "indice": 127
+  },
+  {
+    "seed": 260910092665,
+    "score": 10,
+    "indice": 128
+  },
+  {
+    "seed": 260910092702,
+    "score": 10,
+    "indice": 129
+  },
+  {
+    "seed": 260910092718,
+    "score": 10,
+    "indice": 130
+  },
+  {
+    "seed": 260910092736,
+    "score": 10,
+    "indice": 131
+  },
+  {
+    "seed": 260910092792,
+    "score": 10,
+    "indice": 132
+  },
+  {
+    "seed": 260910092822,
+    "score": 10,
+    "indice": 133
+  },
+  {
+    "seed": 260910092828,
+    "score": 10,
+    "indice": 134
+  },
+  {
+    "seed": 260910092890,
+    "score": 10,
+    "indice": 135
+  },
+  {
+    "seed": 260910092590,
+    "score": 12,
+    "indice": 136
+  },
+  {
+    "seed": 260910092677,
+    "score": 12,
+    "indice": 137
+  },
+  {
+    "seed": 260910092494,
+    "score": 13,
+    "indice": 138
+  },
+  {
+    "seed": 260910092614,
+    "score": 13,
+    "indice": 139
+  },
+  {
+    "seed": 260910092725,
+    "score": 13,
+    "indice": 140
+  },
+  {
+    "seed": 260910092739,
+    "score": 13,
+    "indice": 141
+  },
+  {
+    "seed": 260910092795,
+    "score": 13,
+    "indice": 142
+  },
+  {
+    "seed": 260910092875,
+    "score": 13,
+    "indice": 143
+  },
+  {
+    "seed": 260910092561,
+    "score": 16,
+    "indice": 144
+  },
+  {
+    "seed": 260910092609,
+    "score": 16,
+    "indice": 145
+  },
+  {
+    "seed": 260910092644,
+    "score": 16,
+    "indice": 146
+  },
+  {
+    "seed": 260910092531,
+    "score": 20,
+    "indice": 147
+  },
+  {
+    "seed": 260910092650,
+    "score": 20,
+    "indice": 148
+  },
+  {
+    "seed": 260910092445,
+    "score": 22,
+    "indice": 149
+  },
+  {
+    "seed": 260910092788,
+    "score": 22,
+    "indice": 150
+  },
+  {
+    "seed": 260910092906,
+    "score": 22,
+    "indice": 151
+  },
+  {
+    "seed": 260910092460,
+    "score": 23,
+    "indice": 152
+  },
+  {
+    "seed": 260910092485,
+    "score": 23,
+    "indice": 153
+  },
+  {
+    "seed": 260910092493,
+    "score": 23,
+    "indice": 154
+  },
+  {
+    "seed": 260910092556,
+    "score": 23,
+    "indice": 155
+  },
+  {
+    "seed": 260910092603,
+    "score": 23,
+    "indice": 156
+  },
+  {
+    "seed": 260910092790,
+    "score": 26,
+    "indice": 157
+  },
+  {
+    "seed": 260910092607,
+    "score": 30,
+    "indice": 158
+  },
+  {
+    "seed": 260910092466,
+    "score": 32,
+    "indice": 159
+  },
+  {
+    "seed": 260910092501,
+    "score": 32,
+    "indice": 160
+  },
+  {
+    "seed": 260910092821,
+    "score": 33,
+    "indice": 161
+  },
+  {
+    "seed": 260910092848,
+    "score": 33,
+    "indice": 162
+  },
+  {
+    "seed": 260910092548,
+    "score": 36,
+    "indice": 163
+  },
+  {
+    "seed": 260910092452,
+    "score": 37,
+    "indice": 164
+  },
+  {
+    "seed": 260910092842,
+    "score": 39,
+    "indice": 165
+  },
+  {
+    "seed": 260910092686,
+    "score": 42,
+    "indice": 166
+  },
+  {
+    "seed": 260910092869,
+    "score": 42,
+    "indice": 167
+  },
+  {
+    "seed": 260910092626,
+    "score": 43,
+    "indice": 168
+  },
+  {
+    "seed": 260910092917,
+    "score": 45,
+    "indice": 169
+  },
+  {
+    "seed": 260910092549,
+    "score": 50,
+    "indice": 170
+  },
+  {
+    "seed": 260910092577,
+    "score": 60,
+    "indice": 171
+  },
+  {
+    "seed": 260910092710,
+    "score": 60,
+    "indice": 172
+  }
+]

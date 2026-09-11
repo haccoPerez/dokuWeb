@@ -1,0 +1,560 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --bg: #f4f4f9;
+    --panel: #ffffff;
+    --text: #43506c;
+    --dark: #2d3748;
+    --muted: #7b879d;
+    --blue: #63b3ed;
+    --blue-soft: #eaf4ff;
+    --green: #9ae6b4;
+    --green-soft: #edf8ee;
+    --purple: #b794f4;
+    --purple-soft: #f3effa;
+    --yellow: #ffd166;
+    --shadow: 0 12px 30px rgba(53,91,140,.12);
+    --soft-shadow: 0 5px 14px rgba(40,60,90,.07);
+}
+
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+body {
+    min-height: 100dvh;
+    user-select: none;
+    overflow-x: hidden;
+}
+
+button {
+    font: inherit;
+}
+
+.tutorial-app {
+    width: min(100%, 560px);
+    min-height: 100dvh;
+    margin: 0 auto;
+    padding:
+        max(12px, env(safe-area-inset-top))
+        14px
+        calc(20px + env(safe-area-inset-bottom));
+}
+
+.tutorial-header {
+    display: grid;
+    grid-template-columns: 46px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.icon-btn,
+.skip-btn {
+    border: 0;
+    background: #fff;
+    color: var(--text);
+    box-shadow: var(--soft-shadow);
+    cursor: pointer;
+}
+
+.icon-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    font-size: 22px;
+}
+
+.skip-btn {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 14px;
+    font-weight: 800;
+    font-size: .82rem;
+}
+
+.tutorial-brand {
+    text-align: center;
+}
+
+.tutorial-brand h1 {
+    margin: 0;
+    color: #333;
+    font-size: 1.45rem;
+    line-height: 1.1;
+}
+
+.tutorial-brand span {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.progress-shell {
+    width: 100%;
+    height: 8px;
+    background: #e3e8ef;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 12px;
+}
+
+.progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--green), var(--blue));
+    transition: width .3s ease;
+}
+
+.coach-card {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    background: rgba(255,255,255,.9);
+    border-radius: 22px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+    margin-bottom: 12px;
+}
+
+.coach-icon {
+    width: 58px;
+    height: 58px;
+    flex: 0 0 58px;
+    display: grid;
+    place-items: center;
+    border-radius: 19px;
+    background: #fff1d8;
+    font-size: 31px;
+    box-shadow: inset 0 0 0 1px rgba(255,209,102,.25);
+}
+
+.coach-copy {
+    min-width: 0;
+}
+
+.step-kicker {
+    color: #6a7b95;
+    font-weight: 800;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 3px;
+}
+
+.coach-copy h2 {
+    margin: 0 0 5px;
+    color: var(--dark);
+    font-size: 1.15rem;
+}
+
+.coach-copy p {
+    margin: 0;
+    color: #718096;
+    line-height: 1.4;
+    font-size: .9rem;
+}
+
+.tutorial-stage {
+    background: rgba(255,255,255,.77);
+    border-radius: 24px;
+    padding: 12px;
+    box-shadow: var(--shadow);
+}
+
+.rule-callout {
+    min-height: 44px;
+    margin-bottom: 10px;
+    padding: 9px 12px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #eef7ff;
+    color: #2c5282;
+    font-size: .84rem;
+    font-weight: 800;
+    text-align: center;
+    transition: background .2s ease, color .2s ease;
+}
+
+.rule-callout.rule-zone {
+    background: #edf8ee;
+    color: #276749;
+}
+
+.rule-callout.rule-neighbors {
+    background: #f3effa;
+    color: #553c9a;
+}
+
+.board-wrap {
+    position: relative;
+    width: min(100%, 430px);
+    margin: 0 auto;
+}
+
+.tutorial-board {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 5px;
+    padding: 6px;
+    background: rgba(255,255,255,.9);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+.tutorial-cell {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: clamp(24px, 8vw, 36px);
+    transition:
+        transform .18s ease,
+        filter .18s ease,
+        opacity .18s ease,
+        box-shadow .18s ease;
+}
+
+.color-0 { background: #ffadad; }
+.color-1 { background: #a0c4ff; }
+.color-2 { background: #caffbf; }
+.color-3 { background: #fdffb6; }
+
+.tutorial-cell.marker {
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,.15));
+    animation: markerIn .22s cubic-bezier(.2,.9,.3,1.2);
+}
+
+.tutorial-cell.cross::after {
+    content: "";
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: rgba(53,91,140,.42);
+    animation: crossIn .18s ease-out;
+}
+
+.tutorial-cell.highlight-rowcol {
+    box-shadow: inset 0 0 0 3px rgba(99,179,237,.55);
+}
+
+.tutorial-cell.highlight-zone {
+    box-shadow: inset 0 0 0 3px rgba(72,187,120,.50);
+    filter: saturate(1.1);
+}
+
+.tutorial-cell.highlight-neighbor {
+    box-shadow: inset 0 0 0 3px rgba(183,148,244,.62);
+}
+
+.tutorial-cell.focus-cell {
+    z-index: 2;
+    box-shadow:
+        0 0 0 4px #fff,
+        0 0 0 8px rgba(99,179,237,.35),
+        0 8px 20px rgba(53,91,140,.16);
+}
+
+.tutorial-cell.dim {
+    opacity: .34;
+}
+
+@keyframes markerIn {
+    from { transform: scale(.55); opacity: .3; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes crossIn {
+    from { transform: scale(.4); opacity: .2; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.tutorial-finger {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 20;
+    font-size: clamp(29px, 8vw, 42px);
+    filter: drop-shadow(0 7px 8px rgba(0,0,0,.20));
+    transform: translate(-120px,-120px);
+    transition: transform .62s cubic-bezier(.22,.8,.25,1);
+    pointer-events: none;
+}
+
+.tutorial-finger.hidden {
+    opacity: 0;
+}
+
+.tutorial-finger.tap {
+    animation: fingerTap .34s ease-in-out;
+}
+
+.tutorial-finger.hold {
+    animation: fingerHold .72s ease-in-out;
+}
+
+@keyframes fingerTap {
+    0%,100% { scale: 1; }
+    45% { scale: .78; }
+}
+
+@keyframes fingerHold {
+    0% { scale: 1; }
+    30%,75% { scale: .75; }
+    100% { scale: 1; }
+}
+
+.interaction-caption {
+    margin-top: 12px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    background: #f4f7fb;
+    color: #62718b;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.rule-strip {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.mini-rule {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 5px;
+    border-radius: 13px;
+    background: #fff;
+    color: #6d7b91;
+    box-shadow: var(--soft-shadow);
+    transition: transform .15s ease, background .15s ease, color .15s ease;
+}
+
+.mini-rule.active {
+    transform: translateY(-2px);
+}
+
+.mini-rule[data-rule="row"].active {
+    background: var(--blue-soft);
+    color: #2c5282;
+}
+
+.mini-rule[data-rule="zone"].active {
+    background: var(--green-soft);
+    color: #276749;
+}
+
+.mini-rule[data-rule="neighbors"].active {
+    background: var(--purple-soft);
+    color: #553c9a;
+}
+
+.mini-rule-icon {
+    width: 23px;
+    height: 23px;
+    display: grid;
+    place-items: center;
+    font-size: 18px;
+    flex: 0 0 23px;
+}
+
+.zone-icon {
+    border-radius: 45% 55% 62% 38% / 52% 46% 54% 48%;
+    background: #9ae6b4;
+}
+
+.mini-rule strong,
+.mini-rule span {
+    display: block;
+    white-space: nowrap;
+}
+
+.mini-rule strong {
+    font-size: .69rem;
+}
+
+.mini-rule span {
+    font-size: .59rem;
+    opacity: .72;
+}
+
+.tutorial-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.primary-btn,
+.secondary-btn {
+    min-height: 48px;
+    border: 0;
+    border-radius: 16px;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 0 18px;
+}
+
+.primary-btn {
+    background: #63b3ed;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(99,179,237,.25);
+}
+
+.secondary-btn {
+    background: #eef2f7;
+    color: var(--text);
+}
+
+.finish-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: rgba(32,42,58,.34);
+    backdrop-filter: blur(4px);
+}
+
+.finish-backdrop.open {
+    display: flex;
+}
+
+.finish-card {
+    width: min(370px,92vw);
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px 20px 20px;
+    box-shadow: 0 22px 65px rgba(35,48,70,.22);
+    text-align: center;
+    animation: finishIn .32s cubic-bezier(.2,.9,.3,1.16);
+}
+
+.finish-icon {
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 12px;
+    border-radius: 22px;
+    background: #fff5d9;
+    display: grid;
+    place-items: center;
+    font-size: 35px;
+}
+
+.finish-card h2 {
+    margin: 0 0 8px;
+    color: var(--dark);
+}
+
+.finish-card p {
+    margin: 0 0 14px;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.summary-rules {
+    text-align: left;
+    display: grid;
+    gap: 7px;
+    margin: 0 0 18px;
+    padding: 12px;
+    border-radius: 16px;
+    background: #f5f7fb;
+    font-size: .84rem;
+    font-weight: 700;
+}
+
+.finish-actions {
+    display: grid;
+    gap: 8px;
+}
+
+@keyframes finishIn {
+    from { opacity: 0; transform: translateY(24px) scale(.93); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 420px) {
+    .tutorial-app {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .coach-card {
+        padding: 11px;
+    }
+
+    .coach-icon {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+        font-size: 27px;
+    }
+
+    .coach-copy h2 {
+        font-size: 1.02rem;
+    }
+
+    .coach-copy p {
+        font-size: .81rem;
+    }
+
+    .tutorial-stage {
+        padding: 9px;
+    }
+
+    .tutorial-board {
+        gap: 4px;
+        padding: 5px;
+    }
+
+    .tutorial-cell {
+        border-radius: 10px;
+    }
+
+    .mini-rule {
+        flex-direction: column;
+        gap: 3px;
+        text-align: center;
+        padding: 7px 3px;
+    }
+
+    .mini-rule strong {
+        font-size: .62rem;
+    }
+
+    .mini-rule span {
+        font-size: .54rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}

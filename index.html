@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f4f4f9">
+    <title>TampiDoku</title>
+    <link rel="stylesheet" href="css/home.css">
+</head>
+<body>
+    <main class="home-app">
+        <section class="hero">
+            <div class="brand-mark" aria-hidden="true">
+                <span class="brand-crab">🦀</span>
+                <span class="brand-ufo">🛸</span>
+            </div>
+
+            <h1>TampiDoku</h1>
+            <p>Un puzzle de sana distancia</p>
+        </section>
+
+        <section class="continue-card">
+            <div class="continue-copy">
+                <span class="continue-kicker">TU PARTIDA</span>
+                <h2 id="continue-title">Continuar</h2>
+                <p id="continue-detail">Cargando progreso…</p>
+            </div>
+
+            <button id="btn-continue" class="continue-button" type="button" disabled>
+                <span class="play-icon">▶</span>
+                <span id="continue-button-text">Continuar</span>
+            </button>
+        </section>
+
+        <section class="progress-summary" aria-label="Progreso">
+            <div class="summary-item">
+                <span class="summary-icon">★</span>
+                <div>
+                    <strong id="total-stars">0</strong>
+                    <span>Estrellas</span>
+                </div>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-item">
+                <span class="summary-icon">✓</span>
+                <div>
+                    <strong id="completed-levels">0</strong>
+                    <span>Completados</span>
+                </div>
+            </div>
+        </section>
+
+        <nav class="home-menu" aria-label="Menú principal">
+            <button id="btn-levels" class="menu-card levels-card" type="button">
+                <span class="menu-icon">▦</span>
+                <span class="menu-copy">
+                    <strong>Niveles</strong>
+                    <small>Elige dónde jugar</small>
+                </span>
+                <span class="menu-arrow">›</span>
+            </button>
+
+            <button id="btn-tutorial" class="menu-card tutorial-card" type="button">
+                <span class="menu-icon">?</span>
+                <span class="menu-copy">
+                    <strong>Cómo jugar</strong>
+                    <small>Repasa las reglas</small>
+                </span>
+                <span class="menu-arrow">›</span>
+            </button>
+        </nav>
+
+        <p class="home-version">TampiDoku Web</p>
+    </main>
+
+    <script src="js/player-progress.js"></script>
+    <script src="js/home.js"></script>
+</body>
+</html>

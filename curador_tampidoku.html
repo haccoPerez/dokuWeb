@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Curador TampiDoku V4 — Dedupe visual 4x4 + Progresión</title>
+<style>
+    :root {
+        font-family: "Segoe UI", Arial, sans-serif;
+        color: #1f2937;
+        background: #eef2f7;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    h1 { margin: 0 0 6px; font-size: 28px; }
+    .sub { margin: 0 0 20px; color: #5f6b7a; }
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        box-shadow: 0 3px 14px rgba(0,0,0,.07);
+    }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+        gap: 14px;
+    }
+    label { display:block; font-weight:600; margin-bottom:6px; }
+    input[type=file], input[type=number], textarea {
+        width:100%;
+        padding:10px;
+        border:1px solid #cbd5e1;
+        border-radius:8px;
+        background:#fff;
+    }
+    textarea {
+        min-height: 170px;
+        resize: vertical;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+    }
+    button {
+        border:0;
+        border-radius:8px;
+        padding:11px 16px;
+        font-weight:700;
+        cursor:pointer;
+        background:#245a92;
+        color:#fff;
+    }
+    button.secondary { background:#4b5563; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    .actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; }
+    progress { width:100%; height:22px; }
+    #status { margin-top:8px; font-weight:600; }
+    table { width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
+    th,td { border-bottom:1px solid #e5e7eb; padding:8px; text-align:right; }
+    th:first-child,td:first-child { text-align:left; }
+    .log {
+        background:#111827;
+        color:#d1d5db;
+        padding:14px;
+        border-radius:8px;
+        height:260px;
+        overflow:auto;
+        font: 13px/1.45 Consolas, monospace;
+        white-space:pre-wrap;
+    }
+    .ok { color:#166534; }
+    .warn { color:#92400e; }
+    .note {
+        padding:10px 12px;
+        border-left:4px solid #245a92;
+        background:#eff6ff;
+        margin-top:12px;
+        font-size:14px;
+    }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <h1>Curador TampiDoku V4</h1>
+    <p class="sub">Reconstruye cada seed, elimina tableros repetidos por firma canónica y genera diccionarios finales listos para <code>data/</code>.</p>
+
+    <div class="card">
+        <h2>1. Archivos fuente</h2>
+        <div class="grid">
+            <div>
+                <label for="dict-files">Diccionarios JSON</label>
+                <input id="dict-files" type="file" accept=".json,application/json" multiple>
+                <small>Selecciona los archivos 4x4…9x9. El tamaño se infiere del nombre.</small>
+            </div>
+            <div>
+                <label for="progress-file">Progresión existente (opcional)</label>
+                <input id="progress-file" type="file" accept=".json,application/json">
+                <small>Si la cargas, se remapean sus índices después de quitar duplicados.</small>
+            </div>
+        </div>
+        <div class="note">
+            5x5–9x9 eliminan duplicados exactos por regiones normalizadas. En 4x4 también se descartan casi-duplicados que difieran en menos de 2 celdas, sin rotar, reflejar ni transponer.
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>2. Nueva progresión (solo si no cargas progresion.json)</h2>
+        <div class="grid">
+            <div>
+                <label for="target-levels">Total de niveles</label>
+                <input id="target-levels" type="number" min="1" value="5000">
+            </div>
+            <div>
+                <label for="peak-every">Nivel pico cada</label>
+                <input id="peak-every" type="number" min="0" value="10">
+            </div>
+        </div>
+
+        <label for="plan" style="margin-top:14px">Plan de pesos por rango</label>
+        <textarea id="plan">[
+  {"desde":1,   "hasta":10,   "pesos":{"4":100}},
+  {"desde":11,  "hasta":19,   "pesos":{"4":55,"5":45}},
+  {"desde":20,  "hasta":30,   "pesos":{"4":20,"5":50,"6":30}},
+  {"desde":31,  "hasta":89,   "pesos":{"5":20,"6":45,"7":35}},
+  {"desde":90,  "hasta":99,   "pesos":{"6":15,"7":45,"8":40}},
+  {"desde":100, "hasta":5000, "pesos":{"6":5,"7":20,"8":35,"9":40}}
+]</textarea>
+        <small>Los múltiplos del valor “Nivel pico cada” usan el mayor tamaño desbloqueado en su rango.</small>
+    </div>
+
+    <div class="card">
+        <h2>3. Curado</h2>
+        <div class="actions">
+            <button id="btn-process">Curar archivos</button>
+            <button id="btn-download-all" class="secondary" disabled>Descargar resultados</button>
+        </div>
+        <div style="margin-top:14px">
+            <progress id="bar" value="0" max="1"></progress>
+            <div id="status">Esperando archivos…</div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Tamaño</th>
+                    <th>Entrada</th>
+                    <th>Únicos</th>
+                    <th>Duplicados</th>
+                    <th>Inválidos</th>
+                    <th>Score min</th>
+                    <th>Score max</th>
+                </tr>
+            </thead>
+            <tbody id="stats"></tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Log</h2>
+        <div id="log" class="log"></div>
+    </div>
+</div>
+
+<script>
+"use strict";
+
+// ============================================================
+// MOTOR DE GENERACIÓN — copia autocontenida del generador
+// ============================================================
+
+function mulberry32(a) {
+    return function() {
+        let t = a += 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+function shuffleArray(array, rng) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+function countSolutions(grid, size) {
+    let solutionsCount = 0;
+
+    function solve(row, currentMarkers) {
+        if (row === size) {
+            solutionsCount++;
+            return;
+        }
+
+        for (let col = 0; col < size; col++) {
+            if (isValidForSolver(row, col, currentMarkers, grid)) {
+                currentMarkers.push({r: row, c: col, biome: grid[row][col]});
+                solve(row + 1, currentMarkers);
+                currentMarkers.pop();
+
+                if (solutionsCount > 1) return;
+            }
+        }
+    }
+
+    function isValidForSolver(r, c, currentMarkers, grid) {
+        const biome = grid[r][c];
+
+        for (const marker of currentMarkers) {
+            if (marker.c === c) return false;
+            if (marker.biome === biome) return false;
+            if (Math.abs(marker.r - r) <= 1 &&
+                Math.abs(marker.c - c) <= 1) return false;
+        }
+        return true;
+    }
+
+    solve(0, []);
+    return solutionsCount;
+}
+
+function generateRandomLevel(size, seed) {
+    const rng = mulberry32(Number(seed));
+    const maxAttempts = 1500;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        let newSolution = [];
+
+        function solveMarkers(row, currentSolution) {
+            if (row === size) {
+                newSolution = [...currentSolution];
+                return true;
+            }
+
+            const cols = shuffleArray([...Array(size).keys()], rng);
+
+            for (const c of cols) {
+                if (isValidPosition(row, c, currentSolution)) {
+                    currentSolution.push({r: row, c});
+                    if (solveMarkers(row + 1, currentSolution)) return true;
+                    currentSolution.pop();
+                }
+            }
+            return false;
+        }
+
+        function isValidPosition(r, c, currentSolution) {
+            for (const marker of currentSolution) {
+                if (marker.c === c) return false;
+                if (Math.abs(marker.r - r) <= 1 &&
+                    Math.abs(marker.c - c) <= 1) return false;
+            }
+            return true;
+        }
+
+        solveMarkers(0, []);
+
+        if (newSolution.length !== size) continue;
+
+        const newRegionGrid = Array.from(
+            {length:size},
+            () => Array(size).fill(-1)
+        );
+
+        const queue = [];
+
+        newSolution.forEach((marker,index) => {
+            newRegionGrid[marker.r][marker.c] = index;
+            queue.push({r:marker.r,c:marker.c,id:index});
+        });
+
+        while (queue.length > 0) {
+            const randIdx = Math.floor(rng() * queue.length);
+            const current = queue.splice(randIdx,1)[0];
+
+            const neighbors = [
+                {r:current.r-1,c:current.c},
+                {r:current.r+1,c:current.c},
+                {r:current.r,c:current.c-1},
+                {r:current.r,c:current.c+1}
+            ];
+
+            for (const n of neighbors) {
+                if (
+                    n.r >= 0 && n.r < size &&
+                    n.c >= 0 && n.c < size &&
+                    newRegionGrid[n.r][n.c] === -1
+                ) {
+                    newRegionGrid[n.r][n.c] = current.id;
+                    queue.push({r:n.r,c:n.c,id:current.id});
+                }
+            }
+        }
+
+        if (countSolutions(newRegionGrid,size) === 1) {
+            return {
+                generatedSolution:newSolution,
+                generatedRegions:newRegionGrid
+            };
+        }
+    }
+
+    return null;
+}
+
+// ============================================================
+// FIRMA CANÓNICA
+// ============================================================
+
+function normalizeRegions(grid) {
+    const idMap = new Map();
+    let nextId = 0;
+
+    return grid.map(row => row.map(value => {
+        if (!idMap.has(value)) {
+            idMap.set(value,nextId++);
+        }
+        return idMap.get(value);
+    }));
+}
+
+function getBoardSignature(level) {
+    // La identidad visual del tablero queda definida únicamente por
+    // la forma de sus regiones. Los IDs internos se normalizan antes
+    // de comparar para detectar tableros visualmente idénticos aunque
+    // sus regiones tengan numeraciones distintas.
+    return normalizeRegions(level.generatedRegions)
+        .map(row => row.join(","))
+        .join("|");
+}
+
+// Distancia visual entre dos tableros ya normalizados.
+// NO rota, refleja ni transpone: compara exactamente las mismas coordenadas.
+function visualDistance(gridA, gridB) {
+    let diff = 0;
+
+    for (let r = 0; r < gridA.length; r++) {
+        for (let c = 0; c < gridA[r].length; c++) {
+            if (gridA[r][c] !== gridB[r][c]) {
+                diff++;
+            }
+        }
+    }
+
+    return diff;
+}
+
+// Para 4x4 exigimos al menos 2 celdas distintas.
+// 0 = duplicado exacto
+// 1 = casi duplicado visual
+// 2+ = suficientemente diferente
+function isTooSimilar4x4(levelA, levelB) {
+    const a = normalizeRegions(levelA.generatedRegions);
+    const b = normalizeRegions(levelB.generatedRegions);
+
+    return visualDistance(a, b) < 2;
+}
+
+// ============================================================
+// UTILIDADES
+// ============================================================
+
+const $ = id => document.getElementById(id);
+const results = {
+    dictionaries:new Map(),
+    progression:null,
+    files:[]
+};
+
+function log(message) {
+    const box = $("log");
+    box.textContent += `> ${message}\n`;
+    box.scrollTop = box.scrollHeight;
+}
+
+function inferSize(filename) {
+    const m = filename.match(/(?:diccionario[_-]?)?(\d+)x\1/i);
+    if (m) return Number(m[1]);
+
+    const m2 = filename.match(/(\d+)x(\d+)/i);
+    if (m2 && m2[1] === m2[2]) return Number(m2[1]);
+
+    return null;
+}
+
+async function readJsonFile(file) {
+    const text = await file.text();
+    return JSON.parse(text);
+}
+
+function yieldUI() {
+    return new Promise(resolve => setTimeout(resolve,0));
+}
+
+function downloadJson(filename,data) {
+    const blob = new Blob(
+        [JSON.stringify(data,null,2)],
+        {type:"application/json"}
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url),1000);
+}
+
+function updateStats(rows) {
+    $("stats").innerHTML = rows.map(s => `
+        <tr>
+            <td>${s.size}x${s.size}</td>
+            <td>${s.input}</td>
+            <td>${s.unique}</td>
+            <td>${s.duplicates}</td>
+            <td>${s.invalid}</td>
+            <td>${s.minScore ?? "-"}</td>
+            <td>${s.maxScore ?? "-"}</td>
+        </tr>
+    `).join("");
+}
+
+// ============================================================
+// CURADO DE DICCIONARIOS
+// ============================================================
+
+async function curateDictionary(size,items,progress,totalWork) {
+    const signatures = new Map();
+    const curated = [];
+    const acceptedLevels = []; // tableros reconstruidos ya aceptados
+    const duplicates = [];
+    let invalid = 0;
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+
+        if (
+            item == null ||
+            item.seed === undefined ||
+            item.seed === null
+        ) {
+            invalid++;
+            progress.done++;
+            continue;
+        }
+
+        const level = generateRandomLevel(size,item.seed);
+
+        if (!level) {
+            invalid++;
+            log(`${size}x${size}: seed ${item.seed} no pudo reconstruirse.`);
+            progress.done++;
+            continue;
+        }
+
+        const signature = getBoardSignature(level);
+
+        let duplicateOf = null;
+        let duplicateReason = null;
+
+        // Regla general: duplicado exacto por firma visual.
+        if (signatures.has(signature)) {
+            duplicateOf = signatures.get(signature);
+            duplicateReason = "exacto";
+        }
+
+        // Regla especial para 4x4:
+        // si solo cambia 0 o 1 celda respecto a un tablero aceptado,
+        // se considera demasiado parecido visualmente.
+        if (!duplicateOf && size === 4) {
+            for (let k = 0; k < acceptedLevels.length; k++) {
+                if (isTooSimilar4x4(level, acceptedLevels[k].level)) {
+                    duplicateOf = acceptedLevels[k].item;
+                    duplicateReason = "casi-duplicado (menos de 2 celdas distintas)";
+                    break;
+                }
+            }
+        }
+
+        if (duplicateOf) {
+            duplicates.push({
+                seedDescartada:item.seed,
+                seedConservada:duplicateOf.seed,
+                scoreDescartado:item.score,
+                scoreConservado:duplicateOf.score,
+                motivo:duplicateReason
+            });
+
+            if (duplicates.length <= 100) {
+                log(
+                    `${size}x${size}: ${duplicateReason.toUpperCase()} seed ${item.seed} ` +
+                    `~ seed ${duplicateOf.seed}. Se conserva ${duplicateOf.seed}.`
+                );
+            }
+        } else {
+            const kept = {
+                ...item,
+                seed:Number(item.seed)
+            };
+
+            signatures.set(signature,kept);
+            curated.push(kept);
+            acceptedLevels.push({
+                item:kept,
+                level
+            });
+        }
+
+        progress.done++;
+        $("bar").value = progress.done;
+        $("status").textContent =
+            `${progress.done.toLocaleString()} / ${totalWork.toLocaleString()} seeds revisadas`;
+
+        if (i % 50 === 0) await yieldUI();
+    }
+
+    // Orden estable: score ascendente, luego seed.
+    curated.sort((a,b) =>
+        (Number(a.score) || 0) - (Number(b.score) || 0) ||
+        Number(a.seed) - Number(b.seed)
+    );
+
+    // Índice final explícito: útil para auditoría.
+    curated.forEach((item,index) => {
+        item.indice = index;
+    });
+
+    return {curated,duplicates,invalid};
+}
+
+// ============================================================
+// PROGRESIÓN
+// ============================================================
+
+function deterministicUnit(level) {
+    // Hash entero sencillo y reproducible.
+    let x = Math.imul(level ^ 0x9e3779b9, 0x85ebca6b);
+    x ^= x >>> 13;
+    x = Math.imul(x,0xc2b2ae35);
+    x ^= x >>> 16;
+    return (x >>> 0) / 4294967296;
+}
+
+function getRangeForLevel(plan,level) {
+    return plan.find(r => level >= r.desde && level <= r.hasta);
+}
+
+function chooseWeightedSize(range,level,peakEvery) {
+    const entries = Object.entries(range.pesos)
+        .map(([size,weight]) => [Number(size),Number(weight)])
+        .filter(([,weight]) => weight > 0)
+        .sort((a,b) => a[0] - b[0]);
+
+    if (!entries.length) {
+        throw new Error(`El rango ${range.desde}-${range.hasta} no tiene pesos válidos.`);
+    }
+
+    if (peakEvery > 0 && level % peakEvery === 0) {
+        return entries[entries.length - 1][0];
+    }
+
+    const total = entries.reduce((sum,[,w]) => sum+w,0);
+    let cursor = deterministicUnit(level) * total;
+
+    for (const [size,weight] of entries) {
+        cursor -= weight;
+        if (cursor < 0) return size;
+    }
+
+    return entries[entries.length - 1][0];
+}
+
+function buildNewProgression(dictionaries,targetLevels,plan,peakEvery) {
+    const cursors = new Map();
+    const progression = [];
+
+    for (const size of dictionaries.keys()) cursors.set(size,0);
+
+    for (let level = 1; level <= targetLevels; level++) {
+        const range = getRangeForLevel(plan,level);
+        if (!range) {
+            throw new Error(`No hay rango de progresión definido para nivel ${level}.`);
+        }
+
+        let size = chooseWeightedSize(range,level,peakEvery);
+
+        // Si ese tamaño no está disponible, usar el más cercano permitido
+        // que sí tenga diccionario.
+        if (!dictionaries.has(size)) {
+            const available = [...dictionaries.keys()].sort((a,b) =>
+                Math.abs(a-size)-Math.abs(b-size)
+            );
+            if (!available.length) throw new Error("No hay diccionarios disponibles.");
+            size = available[0];
+        }
+
+        const dict = dictionaries.get(size);
+        const cursor = cursors.get(size) || 0;
+
+        if (cursor >= dict.length) {
+            throw new Error(
+                `No hay suficientes tableros ${size}x${size}. ` +
+                `Se necesitan más de ${dict.length} para completar la progresión.`
+            );
+        }
+
+        const item = dict[cursor];
+
+        progression.push({
+            nivel:level,
+            tamano:size,
+            indice:cursor,
+            score:Number(item.score) || 0
+        });
+
+        cursors.set(size,cursor+1);
+    }
+
+    return progression;
+}
+
+function remapExistingProgression(oldProgression,originalBySize,curatedBySize) {
+    const mapsBySize = new Map();
+
+    for (const [size,curated] of curatedBySize.entries()) {
+        const bySeed = new Map();
+        curated.forEach((item,index) => {
+            bySeed.set(String(item.seed),index);
+        });
+        mapsBySize.set(size,bySeed);
+    }
+
+    // Evita que dos niveles terminen apuntando al mismo tablero final.
+    const usedBySize = new Map();
+    for (const size of curatedBySize.keys()) {
+        usedBySize.set(size,new Set());
+    }
+
+    function findUnusedReplacement(size,preferredScore) {
+        const curated = curatedBySize.get(size) || [];
+        const used = usedBySize.get(size);
+
+        let bestIndex = -1;
+        let bestDistance = Infinity;
+
+        for (let i=0; i<curated.length; i++) {
+            if (used.has(i)) continue;
+
+            const score = Number(curated[i].score) || 0;
+            const distance = Math.abs(score - preferredScore);
+
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestIndex = i;
+                if (distance === 0) break;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    const remapped = [];
+    let skipped = 0;
+    let replacedDuplicates = 0;
+
+    for (const entry of [...oldProgression].sort(
+        (a,b) => Number(a.nivel)-Number(b.nivel)
+    )) {
+        const size = Number(entry.tamano);
+        const oldDict = originalBySize.get(size);
+        const curated = curatedBySize.get(size);
+        const used = usedBySize.get(size);
+
+        if (!oldDict || !curated || !used) {
+            log(`Progresión nivel ${entry.nivel}: falta diccionario ${size}x${size}.`);
+            skipped++;
+            continue;
+        }
+
+        const oldIndex = Number(entry.indice);
+        const oldItem = oldDict[oldIndex];
+
+        if (!oldItem || oldItem.seed == null) {
+            log(`Progresión nivel ${entry.nivel}: índice original ${oldIndex} inválido.`);
+            skipped++;
+            continue;
+        }
+
+        const preferredScore =
+            Number(oldItem.score) ||
+            Number(entry.score) ||
+            0;
+
+        let newIndex = mapsBySize.get(size)?.get(String(oldItem.seed));
+
+        // Si la seed fue eliminada por ser duplicada, localizar el tablero
+        // conservado mediante la firma canónica.
+        if (newIndex === undefined) {
+            const oldLevel = generateRandomLevel(size,oldItem.seed);
+
+            if (oldLevel) {
+                const oldSignature = getBoardSignature(oldLevel);
+
+                for (let i=0; i<curated.length; i++) {
+                    const test = generateRandomLevel(size,curated[i].seed);
+                    if (test && getBoardSignature(test) === oldSignature) {
+                        newIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Si el tablero ya fue utilizado por otro nivel, sustituirlo por
+        // otro tablero aún no usado con score lo más parecido posible.
+        if (newIndex === undefined || used.has(newIndex)) {
+            const replacement = findUnusedReplacement(size,preferredScore);
+
+            if (replacement < 0) {
+                log(
+                    `Nivel ${entry.nivel}: no quedan tableros únicos ` +
+                    `${size}x${size} disponibles para reemplazo.`
+                );
+                skipped++;
+                continue;
+            }
+
+            if (newIndex !== undefined && used.has(newIndex)) {
+                log(
+                    `Nivel ${entry.nivel}: el tablero del índice ${newIndex} ` +
+                    `ya estaba usado; sustituido por índice ${replacement}.`
+                );
+                replacedDuplicates++;
+            } else {
+                log(
+                    `Nivel ${entry.nivel}: seed ${oldItem.seed} no sobrevivió ` +
+                    `al curado; sustituida por índice ${replacement}.`
+                );
+            }
+
+            newIndex = replacement;
+        }
+
+        used.add(newIndex);
+
+        const item = curated[newIndex];
+
+        remapped.push({
+            ...entry,
+            tamano:size,
+            indice:newIndex,
+            score:Number(item.score) || preferredScore
+        });
+    }
+
+    if (replacedDuplicates) {
+        log(
+            `Progresión: ${replacedDuplicates} referencias repetidas ` +
+            `fueron sustituidas por tableros únicos.`
+        );
+    }
+
+    if (skipped) {
+        log(`ADVERTENCIA: ${skipped} entradas de progresión no pudieron remapearse.`);
+    }
+
+    return remapped.sort((a,b) => Number(a.nivel)-Number(b.nivel));
+}
+
+// ============================================================
+// PROCESO PRINCIPAL
+// ============================================================
+
+$("btn-process").addEventListener("click", async () => {
+    const files = [...$("dict-files").files];
+
+    if (!files.length) {
+        alert("Selecciona al menos un diccionario JSON.");
+        return;
+    }
+
+    $("btn-process").disabled = true;
+    $("btn-download-all").disabled = true;
+    $("log").textContent = "";
+    $("stats").innerHTML = "";
+    results.dictionaries.clear();
+    results.progression = null;
+    results.files = [];
+
+    try {
+        const sourceBySize = new Map();
+
+        for (const file of files) {
+            const size = inferSize(file.name);
+
+            if (!size) {
+                throw new Error(`No pude inferir el tamaño desde: ${file.name}`);
+            }
+
+            const data = await readJsonFile(file);
+
+            if (!Array.isArray(data)) {
+                throw new Error(`${file.name} no contiene un arreglo JSON.`);
+            }
+
+            if (sourceBySize.has(size)) {
+                throw new Error(`Hay más de un diccionario para ${size}x${size}.`);
+            }
+
+            sourceBySize.set(size,data);
+            log(`${file.name}: ${data.length.toLocaleString()} entradas cargadas.`);
+        }
+
+        const totalWork = [...sourceBySize.values()]
+            .reduce((sum,arr) => sum+arr.length,0);
+
+        $("bar").max = totalWork;
+        $("bar").value = 0;
+
+        const progress = {done:0};
+        const stats = [];
+        const duplicateReports = new Map();
+
+        for (const size of [...sourceBySize.keys()].sort((a,b)=>a-b)) {
+            const input = sourceBySize.get(size);
+
+            log(`--- Curando ${size}x${size} ---`);
+
+            const result = await curateDictionary(
+                size,input,progress,totalWork
+            );
+
+            results.dictionaries.set(size,result.curated);
+            duplicateReports.set(size,result.duplicates);
+
+            const scores = result.curated
+                .map(x => Number(x.score))
+                .filter(Number.isFinite);
+
+            stats.push({
+                size,
+                input:input.length,
+                unique:result.curated.length,
+                duplicates:result.duplicates.length,
+                invalid:result.invalid,
+                minScore:scores.length ? Math.min(...scores) : null,
+                maxScore:scores.length ? Math.max(...scores) : null
+            });
+
+            updateStats(stats);
+
+            log(
+                `${size}x${size}: ${result.curated.length} únicos, ` +
+                `${result.duplicates.length} duplicados, ${result.invalid} inválidos.`
+            );
+        }
+
+        // Generar reporte de colisiones.
+        for (const [size,rows] of duplicateReports.entries()) {
+            if (rows.length) {
+                results.files.push({
+                    name:`duplicados_${size}x${size}.json`,
+                    data:rows
+                });
+            }
+        }
+
+        const progressFile = $("progress-file").files[0];
+
+        if (progressFile) {
+            const oldProgression = await readJsonFile(progressFile);
+
+            if (!Array.isArray(oldProgression)) {
+                throw new Error("progresion.json debe contener un arreglo.");
+            }
+
+            log("Remapeando progresión existente después del deduplicado…");
+
+            results.progression = remapExistingProgression(
+                oldProgression,
+                sourceBySize,
+                results.dictionaries
+            );
+        } else {
+            const targetLevels = Number($("target-levels").value);
+            const peakEvery = Number($("peak-every").value);
+            const plan = JSON.parse($("plan").value);
+
+            log(`Generando nueva progresión de ${targetLevels} niveles…`);
+
+            results.progression = buildNewProgression(
+                results.dictionaries,
+                targetLevels,
+                plan,
+                peakEvery
+            );
+        }
+
+        for (const [size,data] of results.dictionaries.entries()) {
+            results.files.push({
+                name:`diccionario_${size}x${size}_N.json`,
+                data
+            });
+        }
+
+        results.files.push({
+            name:"progresion.json",
+            data:results.progression
+        });
+
+        $("status").textContent =
+            `Curado terminado: ${results.progression.length.toLocaleString()} niveles de progresión.`;
+
+        $("btn-download-all").disabled = false;
+        log("Proceso terminado. Resultados listos para descargar.");
+
+    } catch (err) {
+        console.error(err);
+        $("status").textContent = "Error durante el curado.";
+        log(`ERROR: ${err.message}`);
+        alert(err.message);
+    } finally {
+        $("btn-process").disabled = false;
+    }
+});
+
+$("btn-download-all").addEventListener("click", async () => {
+    for (const file of results.files) {
+        downloadJson(file.name,file.data);
+        await new Promise(resolve => setTimeout(resolve,150));
+    }
+    log(`${results.files.length} archivos enviados a descarga.`);
+});
+</script>
+</body>
+</html>

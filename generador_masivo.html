@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Curador TampiDoku</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 30px; max-width: 600px; margin: auto; background: #f4f4f9; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        input { padding: 8px; margin: 0 10px 15px 0; border: 1px solid #ccc; border-radius: 4px; width: 100px; }
+        button { padding: 10px 20px; background: #2c5282; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #9ca9b5; cursor: not-allowed; }
+        progress { width: 100%; height: 22px; margin: 15px 0; border-radius: 10px; overflow: hidden; }
+        .log { font-family: monospace; font-size: 13px; background: #2d3748; color: #a0aec0; padding: 15px; border-radius: 8px; height: 180px; overflow-y: auto; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Curador de Semillas (Offline)</h2>
+        <label>Niveles válidos:</label>
+        <input type="number" id="num-levels" value="1000" min="10">
+        <label>Tamaño del grid:</label>
+        <input type="number" id="board-size" value="6" min="4" max="10">
+        <br>
+        <button id="btn-start" onclick="iniciar()">Iniciar Extracción</button>
+        
+        <progress id="progress-bar" value="0" max="100"></progress>
+        <div id="status" style="font-weight: bold;">Esperando orden...</div>
+        
+        <div class="log" id="log-box"></div>
+    </div>
+
+    <script>
+        let worker;
+        
+        function log(msg) {
+            const b = document.getElementById('log-box');
+            b.innerHTML += `<div>> ${msg}</div>`;
+            b.scrollTop = b.scrollHeight;
+        }
+
+        function iniciar() {
+            const total = parseInt(document.getElementById('num-levels').value);
+            const size = parseInt(document.getElementById('board-size').value);
+            
+            document.getElementById('btn-start').disabled = true;
+            document.getElementById('progress-bar').max = total;
+            document.getElementById('progress-bar').value = 0;
+            
+            log(`Iniciando Web Worker para curar ${total} tableros de ${size}x${size}...`);
+
+            worker = new Worker('js/worker.js');
+            worker.postMessage({ action: 'START', total, size });
+
+            worker.onmessage = function(e) {
+                const { type, payload } = e.data;
+                
+                if (type === 'PROGRESS') {
+                    document.getElementById('progress-bar').value = payload.count;
+                    document.getElementById('status').innerText = `${payload.count} / ${total} tableros válidos`;
+                } else if (type === 'DONE') {
+                    log(`Extracción finalizada. Ordenando por dificultad...`);
+                    descargarJSON(payload.niveles, size);
+                    document.getElementById('btn-start').disabled = false;
+                    worker.terminate();
+                } else if (type === 'LOG') {
+                    log(payload);
+                }
+            };
+        }
+
+        function descargarJSON(data, size) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `diccionario_${size}x${size}_${data.length}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            log(`Descarga de diccionario_${size}x${size}_${data.length}.json iniciada.`);
+        }
+    </script>
+</body>
+</html>

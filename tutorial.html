@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TampiDoku - Tutorial</title>
+    <link rel="stylesheet" href="css/tutorial.css">
+</head>
+<body>
+    <main class="tutorial-app">
+        <header class="tutorial-header">
+            <button class="icon-btn" type="button" aria-label="Salir" onclick="window.location.href='niveles.html'">‹</button>
+
+            <div class="tutorial-brand">
+                <h1>TampiDoku</h1>
+                <span>Cómo jugar</span>
+            </div>
+
+            <button id="btn-skip" class="skip-btn" type="button">Saltar</button>
+        </header>
+
+        <section class="progress-shell">
+            <div id="tutorial-progress" class="progress-fill"></div>
+        </section>
+
+        <section class="coach-card">
+            <div id="coach-icon" class="coach-icon">🦀</div>
+            <div class="coach-copy">
+                <div id="step-kicker" class="step-kicker">Demostración</div>
+                <h2 id="step-title">Mira cómo se resuelve</h2>
+                <p id="step-text">Vamos a resolver un tablero pequeño paso a paso.</p>
+            </div>
+        </section>
+
+        <section class="tutorial-stage">
+            <div id="rule-callout" class="rule-callout">
+                Observa el tablero
+            </div>
+
+            <div id="board-wrap" class="board-wrap">
+                <div id="tutorial-board" class="tutorial-board"></div>
+                <div id="tutorial-finger" class="tutorial-finger" aria-hidden="true">☝️</div>
+            </div>
+
+            <div id="interaction-caption" class="interaction-caption">
+                La mano te mostrará qué hacer
+            </div>
+        </section>
+
+        <section class="rule-strip">
+            <div class="mini-rule" data-rule="row">
+                <div class="mini-rule-icon">↔</div>
+                <div>
+                    <strong>1 por fila</strong>
+                    <span>y columna</span>
+                </div>
+            </div>
+
+            <div class="mini-rule" data-rule="zone">
+                <div class="mini-rule-icon zone-icon"></div>
+                <div>
+                    <strong>1 por zona</strong>
+                    <span>de color</span>
+                </div>
+            </div>
+
+            <div class="mini-rule" data-rule="neighbors">
+                <div class="mini-rule-icon">✣</div>
+                <div>
+                    <strong>Sin vecinos</strong>
+                    <span>ni diagonales</span>
+                </div>
+            </div>
+        </section>
+
+        <footer class="tutorial-footer">
+            <button id="btn-replay" class="secondary-btn" type="button">↻ Repetir</button>
+            <button id="btn-pause" class="secondary-btn" type="button">Pausar</button>
+        </footer>
+    </main>
+
+    <div id="tutorial-finish" class="finish-backdrop" aria-hidden="true">
+        <section class="finish-card" role="dialog" aria-modal="true">
+            <div class="finish-icon">🎉</div>
+            <h2>¡Eso es todo!</h2>
+            <p>
+                Una jaiba por fila, columna y zona. Además, nunca pueden tocarse entre sí.
+            </p>
+
+            <div class="summary-rules">
+                <div>✓ 1 por fila y columna</div>
+                <div>✓ 1 por zona de color</div>
+                <div>✓ sin vecinos ni diagonales</div>
+            </div>
+
+            <div class="finish-actions">
+                <button id="btn-play" class="primary-btn" type="button">Jugar Nivel 1</button>
+                <button id="btn-repeat-finish" class="secondary-btn" type="button">Ver otra vez</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/tutorial.js"></script>
+</body>
+</html>

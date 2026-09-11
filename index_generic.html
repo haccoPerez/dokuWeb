@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TampiDoku - Soft UI</title>
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+
+    <h1>TampiDoku</h1>
+    
+    
+<div class="top-hud">
+    <!-- Píldora de Nivel -->
+    <div class="hud-pill">
+        <span class="hud-icon">▦</span> 
+        <span id="level-display">6x6</span>
+    </div>
+    
+    <!-- Píldora de Vidas -->
+    <div class="hud-pill">
+        <span class="hud-icon" style="color: #e56b6f;">❤️</span> 
+        <span id="lives-display"><span id="lives">3</span> / 3</span>
+    </div>
+
+    <!-- Píldora de Temporizador -->
+    <div class="hud-pill">
+        <span class="hud-icon" style="color: #4299e1;">⏱️</span> 
+        <span id="timer">00:00</span>
+    </div>
+
+    <!-- Píldora de Récord -->
+    <div class="hud-pill">
+        <span class="hud-icon" style="color: #ffd166;">🏆</span> 
+        <span id="record-display">--:--</span>
+    </div>
+</div>
+
+<div class="rules-bar">
+    <div class="rule-card rule-blue">
+        <div class="diagram-grid">
+            <div></div><div class="dot dot-blue"></div><div></div>
+            <div class="dot dot-blue"></div><div class="dot dot-blue"></div><div class="dot dot-blue"></div>
+            <div></div><div class="dot dot-blue"></div><div></div>
+        </div>
+        <div class="rule-text">
+            <strong>1 por fila</strong>
+            <span>y columna</span>
+        </div>
+    </div>
+
+    <div class="rule-card rule-green">
+        <div class="diagram-blob"></div>
+        <div class="rule-text">
+            <strong>1 por zona</strong>
+            <span>(de color)</span>
+        </div>
+    </div>
+
+    <div class="rule-card rule-purple">
+        <div class="diagram-grid">
+            <div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div>
+            <div class="dot dot-purple-light"></div><div class="dot dot-purple-dark"></div><div class="dot dot-purple-light"></div>
+            <div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div><div class="dot dot-purple-light"></div>
+        </div>
+        <div class="rule-text">
+            <strong>Sin vecinos</strong>
+            <span>(incluye diagonales)</span>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Capa superpuesta del comodín -->
+<div id="ufo-overlay">
+    <div class="ufo-wrap" id="ufo-wrap">
+        <svg class="ufo-svg" viewBox="0 0 300 260" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="beamGradient" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#9dffe1" stop-opacity=".7" />
+                    <stop offset="100%" stop-color="#9dffe1" stop-opacity="0" />
+                </linearGradient>
+            </defs>
+            <g class="beam">
+                <path class="beam-shape" d="M112 126 L188 126 L245 245 L55 245 Z" />
+            </g>
+            <g class="ship">
+                <path class="dome" d="M96 78 C105 38 125 24 150 24 C175 24 195 38 204 78 Z" />
+                <ellipse class="body-main" cx="150" cy="94" rx="104" ry="36" />
+                <ellipse class="rim" cx="150" cy="99" rx="117" ry="25" />
+                <path class="body-bottom" d="M68 100 C82 127 108 142 150 142 C192 142 218 127 232 100 C215 111 188 118 150 118 C112 118 85 111 68 100 Z" />
+                <g>
+                    <circle class="light" cx="85" cy="108" r="7" />
+                    <circle class="light" cx="118" cy="118" r="7" />
+                    <circle class="light" cx="150" cy="122" r="7" />
+                    <circle class="light" cx="182" cy="118" r="7" />
+                    <circle class="light" cx="215" cy="108" r="7" />
+                </g>
+            </g>
+        </svg>
+    </div>
+</div>
+<!-- Capa superpuesta del comodín -->
+    
+    <div id="hint-display"></div>
+    <div id="game-message" style="font-weight:bold; min-height: 24px; text-align: center; margin-bottom: 10px;"></div>
+    
+    <div id="board" class="board"></div>
+
+    <div style="margin-top: 20px;">
+        <button id="btn-hint" onclick="requestHint()">💡 Dar Pista</button>
+        <!-- Corregida la llamada a la función del marcador -->
+        <button id="btn-reveal" onclick="revealRandomMarker()">🛸 Revelar</button>
+        <button onclick="resetGame()">Reiniciar Nivel Actual</button>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
