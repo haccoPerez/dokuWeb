@@ -2,92 +2,92 @@
   {
     "nivel": 1,
     "tamano": 4,
-    "indice": 0,
-    "score": 6
-  },
-  {
-    "nivel": 2,
-    "tamano": 4,
-    "indice": 1,
-    "score": 6
-  },
-  {
-    "nivel": 3,
-    "tamano": 4,
-    "indice": 2,
-    "score": 7
-  },
-  {
-    "nivel": 4,
-    "tamano": 4,
-    "indice": 3,
-    "score": 7
-  },
-  {
-    "nivel": 5,
-    "tamano": 4,
-    "indice": 4,
-    "score": 7
-  },
-  {
-    "nivel": 6,
-    "tamano": 4,
     "indice": 5,
     "score": 7
   },
   {
-    "nivel": 7,
+    "nivel": 2,
     "tamano": 4,
     "indice": 6,
     "score": 7
   },
   {
-    "nivel": 8,
-    "tamano": 4,
-    "indice": 7,
-    "score": 7
-  },
-  {
-    "nivel": 9,
-    "tamano": 4,
-    "indice": 8,
-    "score": 7
-  },
-  {
-    "nivel": 10,
-    "tamano": 4,
-    "indice": 9,
-    "score": 7
-  },
-  {
-    "nivel": 11,
+    "nivel": 3,
     "tamano": 5,
     "indice": 0,
     "score": 8
   },
   {
-    "nivel": 12,
-    "tamano": 4,
-    "indice": 10,
-    "score": 7
-  },
-  {
-    "nivel": 13,
-    "tamano": 4,
-    "indice": 11,
-    "score": 7
-  },
-  {
-    "nivel": 14,
+    "nivel": 4,
     "tamano": 5,
     "indice": 1,
     "score": 8
   },
   {
+    "nivel": 5,
+    "tamano": 5,
+    "indice": 2,
+    "score": 8
+  },
+  {
+    "nivel": 6,
+    "tamano": 5,
+    "indice": 3,
+    "score": 8
+  },
+  {
+    "nivel": 7,
+    "tamano": 5,
+    "indice": 4,
+    "score": 8
+  },
+  {
+    "nivel": 8,
+    "tamano": 5,
+    "indice": 5,
+    "score": 8
+  },
+  {
+    "nivel": 9,
+    "tamano": 5,
+    "indice": 6,
+    "score": 8
+  },
+  {
+    "nivel": 10,
+    "tamano": 5,
+    "indice": 890,
+    "score": 11
+  },
+  {
+    "nivel": 11,
+    "tamano": 5,
+    "indice": 8,
+    "score": 8
+  },
+  {
+    "nivel": 12,
+    "tamano": 5,
+    "indice": 9,
+    "score": 8
+  },
+  {
+    "nivel": 13,
+    "tamano": 5,
+    "indice": 10,
+    "score": 8
+  },
+  {
+    "nivel": 14,
+    "tamano": 5,
+    "indice": 11,
+    "score": 8
+  },
+  {
     "nivel": 15,
-    "tamano": 4,
+    "tamano": 5,
     "indice": 12,
-    "score": 7
+    "score": 8
   },
   {
     "nivel": 16,
@@ -98,20 +98,20 @@
   {
     "nivel": 17,
     "tamano": 5,
-    "indice": 2,
+    "indice": 14,
     "score": 8
   },
   {
     "nivel": 18,
-    "tamano": 4,
-    "indice": 14,
-    "score": 7
+    "tamano": 5,
+    "indice": 15,
+    "score": 8
   },
   {
     "nivel": 19,
     "tamano": 5,
-    "indice": 3,
-    "score": 8
+    "indice": 1121,
+    "score": 12
   },
   {
     "nivel": 20,

@@ -82,6 +82,12 @@ const LONG_PRESS_MS = 260;
 const RESULT_DIALOG_ARM_MS = 500; // Blindaje incrementado contra ghost-clicks
 const TAP_MOVE_TOLERANCE = 10;
 
+// --- INTRO DEL TABLERO TIPO MAHJONG ---
+const BOARD_INTRO_STEP_MS = 45;
+const BOARD_INTRO_FLIP_MS = 360;
+const BOARD_INTRO_PAUSE_MS = 120;
+let isBoardIntroPlaying = false;
+
 const boardEl = (typeof document !== 'undefined') ? document.getElementById('board') : null;
 
 if (boardEl) {
@@ -145,6 +151,83 @@ async function loadCuratedDictionary(size) {
     return dictionary;
 }
 
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function prefersReducedMotion() {
+    return typeof window !== 'undefined'
+        && window.matchMedia
+        && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+async function playBoardIntro(loadToken) {
+    const cells = Array.from(boardEl.querySelectorAll('.cell'));
+    if (!cells.length) return false;
+
+    isBoardIntroPlaying = true;
+
+    if (prefersReducedMotion()) {
+        cells.forEach(cell => cell.classList.add('tile-revealed'));
+        isBoardIntroPlaying = false;
+        return loadToken === levelLoadToken;
+    }
+
+    let maxWave = 0;
+
+    cells.forEach(cell => {
+        const r = Number(cell.dataset.r);
+        const c = Number(cell.dataset.c);
+        const wave = r + c;
+        maxWave = Math.max(maxWave, wave);
+        cell.style.setProperty('--tile-delay', `${wave * BOARD_INTRO_STEP_MS}ms`);
+    });
+
+    // FASE 1: las fichas aparecen en cascada mostrando el reverso.
+    await new Promise(resolve => requestAnimationFrame(() =>
+        requestAnimationFrame(resolve)
+    ));
+
+    if (loadToken !== levelLoadToken) {
+        isBoardIntroPlaying = false;
+        return false;
+    }
+
+    boardEl.classList.add('board-intro-enter');
+
+    const enterMs = maxWave * BOARD_INTRO_STEP_MS + 220;
+    await wait(enterMs);
+
+    if (loadToken !== levelLoadToken) {
+        isBoardIntroPlaying = false;
+        return false;
+    }
+
+    // Pequeña pausa para que se lea claramente el tablero "cerrado".
+    await wait(BOARD_INTRO_PAUSE_MS);
+
+    // FASE 2: misma ola diagonal, ahora volteando cada ficha.
+    boardEl.classList.add('board-intro-flip');
+
+    const flipMs = maxWave * BOARD_INTRO_STEP_MS + BOARD_INTRO_FLIP_MS;
+    await wait(flipMs);
+
+    if (loadToken !== levelLoadToken) {
+        isBoardIntroPlaying = false;
+        return false;
+    }
+
+    cells.forEach(cell => {
+        cell.classList.add('tile-revealed');
+        cell.style.removeProperty('--tile-delay');
+    });
+
+    boardEl.classList.remove('board-intro-enter', 'board-intro-flip');
+    isBoardIntroPlaying = false;
+    return true;
+}
+
 async function initBoard() {
     const info = window.TampiDokuLevel?.currentEntry;
     if (!info) {
@@ -180,18 +263,38 @@ async function initBoard() {
     regionGrid = newLevel.generatedRegions;
     stateGrid = Array(SIZE).fill(0).map(() => Array(SIZE).fill('EMPTY'));
 
+    boardEl.classList.remove('board-intro-reveal', 'board-intro-enter', 'board-intro-flip');
     boardEl.innerHTML = '';
     boardEl.style.gridTemplateColumns = `repeat(${SIZE}, minmax(0, 1fr))`;
 
     for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
             const cell = document.createElement('div');
-            cell.className = `cell color-${regionGrid[r][c] % 10}`;
+            cell.className = `cell tile-loading color-${regionGrid[r][c] % 10}`;
             cell.dataset.r = r;
             cell.dataset.c = c;
+
+            const tileInner = document.createElement('div');
+            tileInner.className = 'tile-inner';
+
+            const tileFront = document.createElement('div');
+            tileFront.className = 'tile-face tile-front';
+
+            const tileBack = document.createElement('div');
+            tileBack.className = 'tile-face tile-back';
+            tileBack.setAttribute('aria-hidden', 'true');
+            tileBack.textContent = '🦀';
+
+            tileInner.appendChild(tileFront);
+            tileInner.appendChild(tileBack);
+            cell.appendChild(tileInner);
             boardEl.appendChild(cell);
         }
     }
+
+    const introCompleted = await playBoardIntro(loadToken);
+    if (!introCompleted) return false;
+
     return true;
 }
 
@@ -209,8 +312,15 @@ function tryPlaceMarker(r, c, cell) {
     if (solution.some(pos => pos.r === r && pos.c === c)) {
         stateGrid[r][c] = 'MARKER';
         cell.classList.add('marker');
-        cell.innerText = currentTheme.icon;
-        
+
+        const tileFront = cell.querySelector('.tile-front');
+        if (tileFront) {
+            tileFront.textContent = currentTheme.icon;
+        } else {
+            cell.textContent = currentTheme.icon;
+        }
+
+        TampiDokuAudio.play('success');
         markersPlaced++;
         checkWin();
     } else {
@@ -268,7 +378,7 @@ function endPointerInteraction() {
 
 if (boardEl) {
     boardEl.addEventListener('pointerdown', (e) => {
-        if (gameOver || isAnimatingComodin) return;
+        if (gameOver || isAnimatingComodin || isBoardIntroPlaying) return;
         if (e.pointerType === 'mouse' && e.button !== 0 && e.button !== 2) return;
         if (activePointerId !== null) return;
 
@@ -391,8 +501,9 @@ function showLoseDialog() {
     const dialog = document.getElementById('lose-dialog');
     if (!dialog) return;
     dialog.classList.remove('ready');
-    dialog.classList.add('open');
+    dialog.removeAttribute('inert');
     dialog.setAttribute('aria-hidden', 'false');
+    dialog.classList.add('open');
 
     setTimeout(() => {
         if (!dialog.classList.contains('open')) return;
@@ -404,8 +515,90 @@ function showLoseDialog() {
 function hideLoseDialog() {
     const dialog = document.getElementById('lose-dialog');
     if (!dialog) return;
+
+    const focused = document.activeElement;
+    if (focused && dialog.contains(focused)) {
+        focused.blur();
+    }
+
     dialog.classList.remove('open', 'ready');
     dialog.setAttribute('aria-hidden', 'true');
+    dialog.setAttribute('inert', '');
+}
+
+
+function showWinDialog({ level, stars, time, isNewRecord }) {
+    const dialog = document.getElementById('win-dialog');
+    if (!dialog) return;
+
+    const face = document.getElementById('win-face');
+    const title = document.getElementById('win-title');
+    const starsEl = document.getElementById('win-stars');
+    const timeEl = document.getElementById('win-time');
+    const recordEl = document.getElementById('win-record');
+    const nextButton = document.getElementById('btn-next-level-result');
+
+    if (stars >= 3) {
+        face.textContent = '🤩';
+        title.textContent = '¡Perfecto!';
+    } else if (stars === 2) {
+        face.textContent = '😄';
+        title.textContent = '¡Muy bien!';
+    } else {
+        face.textContent = '🙂';
+        title.textContent = '¡Nivel completado!';
+    }
+
+    starsEl.textContent = '⭐'.repeat(stars) + '☆'.repeat(Math.max(0, 3 - stars));
+    timeEl.textContent = `Tiempo ${formatTime(time)}`;
+    recordEl.textContent = isNewRecord ? '🏆 Nuevo récord' : '';
+
+    const manager = window.TampiDokuLevel;
+
+    if (manager && level >= manager.maxLevel) {
+        nextButton.textContent = '✓ Último nivel';
+        nextButton.disabled = true;
+    } else {
+        nextButton.textContent = '▶ Siguiente nivel';
+        nextButton.disabled = false;
+    }
+
+    dialog.removeAttribute('inert');
+    dialog.setAttribute('aria-hidden', 'false');
+    dialog.classList.add('open', 'ready');
+}
+
+function hideWinDialog() {
+    const dialog = document.getElementById('win-dialog');
+    if (!dialog) return;
+
+    // Si un botón del modal conserva el foco, aria-hidden genera warning
+    // y deja un elemento enfocado dentro de una zona oculta.
+    const focused = document.activeElement;
+    if (focused && dialog.contains(focused)) {
+        focused.blur();
+    }
+
+    dialog.classList.remove('open', 'ready');
+    dialog.setAttribute('aria-hidden', 'true');
+    dialog.setAttribute('inert', '');
+}
+
+function goToNextLevelFromResult() {
+    const manager = window.TampiDokuLevel;
+    if (!manager) return;
+
+    const nextLevel = manager.currentLevel + 1;
+
+    if (nextLevel <= manager.maxLevel) {
+        hideWinDialog();
+        manager.goToLevel(nextLevel);
+    }
+}
+
+function replayCurrentLevelFromResult() {
+    hideWinDialog();
+    resetGame();
 }
 
 function playWinConfetti() {
@@ -414,7 +607,7 @@ function playWinConfetti() {
     confetti.classList.remove('active');
     void confetti.offsetWidth;
     confetti.classList.add('active');
-
+    TampiDokuAudio.play('victory');
     setTimeout(() => {
         confetti.classList.remove('active');
     }, 2900);
@@ -422,11 +615,17 @@ function playWinConfetti() {
 
 function setupResultUi() {
     document.addEventListener('keydown', event => {
-        if (event.key === 'Escape') {
-            const dialog = document.getElementById('lose-dialog');
-            if (dialog?.classList.contains('open')) {
-                hideLoseDialog();
-            }
+        if (event.key !== 'Escape') return;
+
+        const loseDialog = document.getElementById('lose-dialog');
+        if (loseDialog?.classList.contains('open')) {
+            hideLoseDialog();
+            return;
+        }
+
+        const winDialog = document.getElementById('win-dialog');
+        if (winDialog?.classList.contains('open')) {
+            hideWinDialog();
         }
     });
 }
@@ -435,6 +634,7 @@ function setupResultUi() {
 
 async function resetGame() {
     hideLoseDialog();
+    hideWinDialog();
     const info = window.TampiDokuLevel?.currentEntry;
 
     if (!info) {
@@ -452,7 +652,8 @@ async function resetGame() {
     if (btnReveal) btnReveal.innerText = `🛸 Revelar ${currentTheme.name}`;
 
     lives = 3;
-    gameOver = true; 
+    gameOver = true;
+    isBoardIntroPlaying = false;
     markersPlaced = 0;
     endPointerInteraction();
 
@@ -483,12 +684,13 @@ function triggerError(cell, r, c) {
     document.getElementById('lives').innerText = lives;
     cell.classList.add('error-shake');
     setTimeout(() => cell.classList.remove('error-shake'), 400);
-
+    TampiDokuAudio.play('error');
     stateGrid[r][c] = 'LOCKED'; 
     cell.classList.add('cross');
     cell.style.cursor = 'not-allowed';
 
     if(lives <= 0) {
+        TampiDokuAudio.play("fail");
         gameOver = true;
         clearInterval(timerInterval);
         const msg = document.getElementById('game-message');
@@ -499,53 +701,50 @@ function triggerError(cell, r, c) {
 }
 
 function checkWin() {
-    if (markersPlaced === SIZE) {
-        gameOver = true;
-        clearInterval(timerInterval);
+    if (markersPlaced !== SIZE) return;
 
-        let currentRecord = localStorage.getItem(getRecordKey());
-        let isNewRecord = false;
+    gameOver = true;
+    clearInterval(timerInterval);
 
-        if (!currentRecord || secondsElapsed < parseInt(currentRecord, 10)) {
-            localStorage.setItem(getRecordKey(), secondsElapsed);
-            isNewRecord = true;
-        }
+    let currentRecord = localStorage.getItem(getRecordKey());
+    let isNewRecord = false;
 
-        updateRecordDisplay();
-        const completedLevel = getCurrentLevelNumber();
-        const msg = document.getElementById('game-message');
-
-        playWinConfetti();
-
-        if (isNewRecord) {
-            msg.innerText = `¡NUEVO RÉCORD! (${formatTime(secondsElapsed)}) Avanzando...`;
-        } else {
-            msg.innerText = `¡Completado en ${formatTime(secondsElapsed)}! Avanzando...`;
-        }
-        msg.style.color = "green";
-
-        const starsEarned = calculateStarsFromLives();
-        window.TampiDokuProgress?.completeLevel(completedLevel, {
-            stars: starsEarned,
-            time: secondsElapsed
-        });
-
-        const starsText = '⭐'.repeat(starsEarned);
-        msg.innerText += ` ${starsText}`;
-
-        window.TampiDokuLevel?.markCompleted(completedLevel);
-
-        setTimeout(() => {
-            const manager = window.TampiDokuLevel;
-            if (!manager) return;
-
-            if (completedLevel < manager.maxLevel) {
-                manager.goToLevel(completedLevel + 1);
-            } else {
-                msg.innerText = `¡Completaste el nivel ${completedLevel}!`;
-            }
-        }, 3000);
+    if (!currentRecord || secondsElapsed < parseInt(currentRecord, 10)) {
+        localStorage.setItem(getRecordKey(), secondsElapsed);
+        isNewRecord = true;
     }
+
+    updateRecordDisplay();
+
+    const completedLevel = getCurrentLevelNumber();
+    const starsEarned = calculateStarsFromLives();
+    const msg = document.getElementById('game-message');
+
+    // Guarda progreso y estrellas antes de mostrar el resultado.
+    window.TampiDokuProgress?.completeLevel(completedLevel, {
+        stars: starsEarned,
+        time: secondsElapsed
+    });
+
+    // Desbloquea el siguiente nivel, pero NO cambia de nivel automáticamente.
+    window.TampiDokuLevel?.markCompleted(completedLevel);
+
+    // Toda la retroalimentación de victoria vive en el modal.
+    // Evita mostrar un mensaje duplicado antes de que aparezca.
+    msg.innerText = "";
+
+    // Esta función ya reproduce TampiDokuAudio.play('victory').
+    playWinConfetti();
+
+    // El modal aparece casi de inmediato y el confeti continúa POR ENCIMA.
+    setTimeout(() => {
+        showWinDialog({
+            level: completedLevel,
+            stars: starsEarned,
+            time: secondsElapsed,
+            isNewRecord
+        });
+    }, 180);
 }
 
 // --- SISTEMA DE PISTAS Y COMODÍN ---
@@ -885,7 +1084,7 @@ function revealRandomMarker() {
 
     const overlay = document.getElementById('ufo-overlay');
     const ufoWrap = document.getElementById('ufo-wrap');
-    
+    TampiDokuAudio.play("ufo");
     ufoWrap.style.left = `${targetX - 70}px`; 
     ufoWrap.style.top = `${targetY - 100}px`;
     overlay.classList.add('active');

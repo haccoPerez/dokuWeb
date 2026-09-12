@@ -457,7 +457,7 @@ button:hover { background-color: #333; }
 #win-confetti {
     position: fixed;
     inset: 0;
-    z-index: 12000;
+    z-index: 14000;
     pointer-events: none;
     overflow: hidden;
     visibility: hidden;
@@ -1004,5 +1004,222 @@ h1 {
 
     .game-titlebar h1 {
         font-size: 1.45rem;
+    }
+}
+
+
+/* ==========================================================
+   MODAL DE VICTORIA
+   Se apoya en la misma base visual del modal de derrota.
+   ========================================================== */
+
+.win-result-backdrop {
+    background: rgba(32, 42, 58, .30);
+}
+
+.win-result-card {
+    overflow: hidden;
+}
+
+.win-face {
+    background: #fff5d9;
+    box-shadow:
+        inset 0 0 0 1px rgba(255, 209, 102, .32),
+        0 6px 16px rgba(183, 121, 31, .08);
+}
+
+.win-stars {
+    min-height: 34px;
+    margin: 8px 0 10px;
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: 3px;
+    filter: drop-shadow(0 3px 4px rgba(183, 121, 31, .12));
+}
+
+.win-stats {
+    display: grid;
+    gap: 4px;
+    margin-bottom: 18px;
+    color: #718096;
+    font-size: .88rem;
+}
+
+.win-stats strong {
+    min-height: 20px;
+    color: #b7791f;
+    font-size: .88rem;
+}
+
+.win-result-actions {
+    grid-template-columns: 1fr 1fr;
+}
+
+.win-result-actions .result-next {
+    grid-column: 1 / -1;
+}
+
+.result-next {
+    background: #63b3ed;
+    color: #fff;
+    box-shadow: 0 7px 18px rgba(99, 179, 237, .22);
+}
+
+.result-repeat {
+    background: #f3effa;
+    color: #553c9a;
+}
+
+.result-next:hover {
+    background: #55a9e7;
+}
+
+.result-repeat:hover {
+    background: #ebe4f7;
+}
+
+.result-next:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+@media (max-width: 380px) {
+    .win-stars {
+        font-size: 23px;
+    }
+
+    .win-result-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .win-result-actions .result-next {
+        grid-column: auto;
+    }
+}
+
+
+/* ==========================================================
+   AJUSTES MODAL DE VICTORIA
+   ========================================================== */
+
+/* El confeti debe celebrarse por encima de la tarjeta de resultado. */
+#win-confetti {
+    z-index: 14000;
+}
+
+/*
+ * El bloqueo anti-ghost-click fue diseñado para derrota.
+ * Victoria se abre fuera del pointerup que finaliza un error, así que
+ * sus botones pueden quedar activos inmediatamente.
+ */
+#win-dialog .result-actions {
+    pointer-events: auto;
+    opacity: 1;
+}
+
+
+/* ==========================================================
+   INTRO DEL TABLERO — FICHAS TIPO MAHJONG
+   ========================================================== */
+
+.cell.tile-loading {
+    position: relative;
+    perspective: 700px;
+    /* El color real no debe verse detrás de la ficha cerrada. */
+    background-color: transparent;
+}
+
+.cell.tile-loading .tile-inner {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    transform: translateY(-14px) scale(.90) rotateY(180deg);
+    opacity: 0;
+    transition:
+        transform 360ms cubic-bezier(.2,.75,.25,1),
+        opacity 160ms ease;
+    transition-delay: var(--tile-delay, 0ms);
+}
+
+.cell.tile-loading .tile-face {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    pointer-events: none;
+}
+
+/* Cara frontal: aquí vive el color real de la región. */
+.cell.tile-loading.color-0 .tile-front { background-color: #ffadad; }
+.cell.tile-loading.color-1 .tile-front { background-color: #a0c4ff; }
+.cell.tile-loading.color-2 .tile-front { background-color: #caffbf; }
+.cell.tile-loading.color-3 .tile-front { background-color: #fdffb6; }
+.cell.tile-loading.color-4 .tile-front { background-color: #bdb2ff; }
+.cell.tile-loading.color-5 .tile-front { background-color: #ffd6a5; }
+.cell.tile-loading.color-6 .tile-front { background-color: #ffc6ff; }
+.cell.tile-loading.color-7 .tile-front { background-color: #9bf6ff; }
+.cell.tile-loading.color-8 .tile-front { background-color: #e4c1f9; }
+.cell.tile-loading.color-9 .tile-front { background-color: #caffbf; }
+
+.cell.tile-loading .tile-front {
+    transform: rotateY(0deg);
+}
+
+.cell.tile-loading .tile-back {
+    transform: rotateY(180deg);
+    background: linear-gradient(145deg, #fffaf0, #f0dfbb);
+    color: #b7791f;
+    font-size: clamp(18px, 5vw, 30px);
+    box-shadow:
+        inset 0 0 0 2px rgba(183,121,31,.16),
+        0 5px 10px rgba(70,55,35,.12);
+}
+
+/*
+ * Primero aparecen las fichas mostrando el reverso.
+ * Después el JS añade .board-intro-flip para voltearlas.
+ */
+#board.board-intro-enter .cell.tile-loading .tile-inner {
+    transform: translateY(0) scale(1) rotateY(180deg);
+    opacity: 1;
+}
+
+#board.board-intro-flip .cell.tile-loading .tile-inner {
+    transform: translateY(0) scale(1) rotateY(0deg);
+    opacity: 1;
+}
+
+.cell.tile-revealed {
+    perspective: none;
+}
+
+.cell.tile-revealed .tile-inner {
+    transform: none;
+    opacity: 1;
+    transition: none;
+}
+
+.cell.tile-revealed .tile-back {
+    display: none;
+}
+
+.cell .tile-inner,
+.cell .tile-face {
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cell.tile-loading .tile-inner {
+        transform: none !important;
+        opacity: 1 !important;
+        transition: none !important;
+    }
+
+    .cell.tile-loading .tile-back {
+        display: none;
     }
 }

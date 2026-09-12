@@ -254,6 +254,7 @@
           document event "tampidoku:levelready"
           document event "tampidoku:levelchange"
     -->
+    <script src="js/audio-manager.js"></script>
     <script src="js/level-manager.js"></script>
     <script src="js/player-progress.js"></script>
     <script src="js/brain.js"></script>
@@ -283,8 +284,52 @@
     <span class="confetti-piece"></span><span class="confetti-piece"></span>
 </div>
 
+
+<!-- Modal de victoria -->
+<div id="win-dialog" class="game-result-backdrop win-result-backdrop" aria-hidden="true" inert>
+    <div class="game-result-card win-result-card"
+         role="dialog"
+         aria-modal="true"
+         aria-labelledby="win-title">
+
+        <div id="win-face" class="result-face win-face">🤩</div>
+
+        <h2 id="win-title">¡Nivel completado!</h2>
+
+        <div id="win-stars" class="win-stars" aria-label="Estrellas obtenidas">
+            ⭐⭐⭐
+        </div>
+
+        <div class="win-stats">
+            <span id="win-time">Tiempo 00:00</span>
+            <strong id="win-record"></strong>
+        </div>
+
+        <div class="result-actions win-result-actions">
+            <button id="btn-next-level-result"
+                    class="result-next"
+                    type="button"
+                    onclick="goToNextLevelFromResult();">
+                ▶ Siguiente nivel
+            </button>
+
+            <button class="result-levels"
+                    type="button"
+                    onclick="window.location.href='niveles.html';">
+                ▦ Niveles
+            </button>
+
+            <button class="result-repeat"
+                    type="button"
+                    onclick="replayCurrentLevelFromResult();">
+                ↻ Repetir
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal de derrota -->
-<div id="lose-dialog" class="game-result-backdrop" aria-hidden="true">
+<div id="lose-dialog" class="game-result-backdrop" aria-hidden="true" inert>
     <div class="game-result-card" role="dialog" aria-modal="true" aria-labelledby="lose-title">
         <div class="result-face">😵</div>
         <h2 id="lose-title">¡Uy, casi!</h2>
